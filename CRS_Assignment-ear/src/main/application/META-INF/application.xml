@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<application xmlns="https://jakarta.ee/xml/ns/jakartaee"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/application_11.xsd"
+             version="11">
+
+  <display-name>CRS_Assignment</display-name>
+
+  <module>
+    <web>
+      <web-uri>com.crs-CRS_Assignment-web-1.0.0.war</web-uri>
+      <context-root>CRS_Assignment</context-root>
+    </web>
+  </module>
+
+  <module>
+    <ejb>com.crs-CRS_Assignment-ejb-1.0.0.jar</ejb>
+  </module>
+
+</application>
