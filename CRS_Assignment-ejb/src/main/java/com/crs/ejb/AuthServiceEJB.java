@@ -1,26 +1,31 @@
 package com.crs.ejb;
-
 import com.crs.dao.UserDAO;
 import com.crs.entity.User;
 import com.crs.util.PasswordUtil;
 import jakarta.ejb.Stateless;
 import java.sql.SQLException;
-
 @Stateless
 public class AuthServiceEJB {
-
     public User login(String email, String plainPassword) throws SQLException {
         if (email == null || email.isBlank() || plainPassword == null) return null;
-
         UserDAO userDAO = new UserDAO();
         User u = userDAO.findByEmail(email.trim().toLowerCase());
         if (u == null) return null;
         if (!u.isActive()) return null;
-        if (!PasswordUtil.verify(plainPassword, u.getPasswordHash())) return null;
+
+        String stored = u.getPasswordHash();
+        if (stored == null) return null;
+
+        // If stored looks like "salt:hash" format → verify using PasswordUtil
+        // Otherwise fallback to plain text compare (for demo/seeded data)
+        if (stored.contains(":")) {
+            if (!PasswordUtil.verify(plainPassword, stored)) return null;
+        } else {
+            if (!stored.equals(plainPassword)) return null;
+        }
 
         // Do NOT return password hash to presentation tier (defense-in-depth)
         u.setPasswordHash(null);
         return u;
     }
 }
-

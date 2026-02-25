@@ -1,10 +1,12 @@
 package com.crs.ejb;
 
 import com.crs.dao.AssessmentDAO;
+import com.crs.dao.EnrolmentDAO;
 import com.crs.dao.MilestoneDAO;
 import com.crs.dao.RecoveryPlanDAO;
 import com.crs.dao.StudentResultDAO;
 import com.crs.entity.Assessment;
+import com.crs.entity.Enrolment;
 import com.crs.entity.Milestone;
 import com.crs.entity.RecoveryPlan;
 import com.crs.entity.StudentResult;
@@ -20,6 +22,67 @@ public class RecoveryPlanEJB {
     @EJB
     private NotificationEJB notificationEJB;
 
+    private final EnrolmentDAO enrolmentDAO = new EnrolmentDAO();
+    private final RecoveryPlanDAO planDAO = new RecoveryPlanDAO();
+
+    // ─────────────────────────────────────────────
+    // 4.1 NEW — get plan by enrolment_id
+    // ─────────────────────────────────────────────
+
+    public RecoveryPlan getPlanByEnrolment(long enrolmentId) throws SQLException {
+        return planDAO.findByEnrolmentId(enrolmentId);
+    }
+
+    // 4.1 NEW — create plan, APPROVED enrolment only, no duplicates
+    public long createPlan(long enrolmentId, String recommendation, long academicUserId) throws SQLException {
+        // 1) Must be an APPROVED enrolment
+        Enrolment e = enrolmentDAO.findApprovedById(enrolmentId);
+        if (e == null) {
+            throw new IllegalStateException("Recovery Plan is only allowed for APPROVED enrolment.");
+        }
+
+        // 2) Prevent duplicates
+        RecoveryPlan existing = planDAO.findByEnrolmentId(enrolmentId);
+        if (existing != null) {
+            throw new IllegalStateException("Recovery Plan already exists for this enrolment.");
+        }
+
+        RecoveryPlan p = new RecoveryPlan();
+        p.setEnrolmentId(enrolmentId);
+        p.setStudentId(e.getStudentId());
+        p.setCourseCode(e.getCourseCode());
+        p.setAttemptNo(e.getAttemptNo());
+        p.setRecommendation(recommendation == null ? "" : recommendation.trim());
+        p.setCreatedByUserId(academicUserId);
+
+        long planId = planDAO.insert(p);
+
+        // 3) Optional notification — non-crash
+        try {
+            if (notificationEJB != null) {
+                notificationEJB.sendMilestoneReminderEmail(
+                    "student@example.com",
+                    "Recovery plan created for enrolment #" + enrolmentId,
+                    "Plan ID: " + planId);
+            }
+        } catch (Exception ignored) {}
+
+        return planId;
+    }
+
+    // 4.1 NEW — update recommendation by enrolmentId
+    public void updateRecommendation(long enrolmentId, String recommendation) throws SQLException {
+        RecoveryPlan p = planDAO.findByEnrolmentId(enrolmentId);
+        if (p == null) throw new IllegalStateException("No plan exists for this enrolment.");
+        planDAO.updateRecommendation(p.getPlanId(), recommendation == null ? "" : recommendation.trim());
+    }
+
+    // ─────────────────────────────────────────────
+    // ORIGINAL — kept for existing servlet/JSP usage
+    // ─────────────────────────────────────────────
+
+    /** @deprecated Use createPlan(enrolmentId, recommendation, userId) instead */
+    @Deprecated
     public RecoveryPlan getOrCreatePlan(String studentId, String courseCode, int attemptNo, long createdByUserId) throws SQLException {
         if (attemptNo < 1 || attemptNo > 3) throw new IllegalArgumentException("attemptNo must be 1..3");
         if (studentId == null || studentId.isBlank()) throw new IllegalArgumentException("studentId required");
@@ -28,11 +91,9 @@ public class RecoveryPlanEJB {
         studentId = studentId.trim();
         courseCode = courseCode.trim().toUpperCase();
 
-        RecoveryPlanDAO dao = new RecoveryPlanDAO();
-        RecoveryPlan p = dao.findByStudentCourseAttempt(studentId, courseCode, attemptNo);
+        RecoveryPlan p = planDAO.findByStudentCourseAttempt(studentId, courseCode, attemptNo);
         if (p != null) return p;
 
-        // Start with default recommendation string based on attempt policy
         String recommendation = defaultRecommendation(studentId, courseCode, attemptNo);
 
         RecoveryPlan np = new RecoveryPlan();
@@ -42,7 +103,7 @@ public class RecoveryPlanEJB {
         np.setRecommendation(recommendation);
         np.setCreatedByUserId(createdByUserId);
 
-        long id = dao.create(np);
+        long id = planDAO.create(np);
         np.setPlanId(id);
 
         if (notificationEJB != null) {
@@ -54,10 +115,12 @@ public class RecoveryPlanEJB {
         return np;
     }
 
-    public void updateRecommendation(long planId, String text) throws SQLException {
+    /** @deprecated Use updateRecommendation(enrolmentId, text) instead */
+    @Deprecated
+    public void updateRecommendation(long planId, String text, boolean byPlanId) throws SQLException {
         if (planId <= 0) throw new IllegalArgumentException("planId invalid");
         if (text == null) text = "";
-        new RecoveryPlanDAO().updateRecommendation(planId, text);
+        planDAO.updateRecommendation(planId, text);
     }
 
     public List<Milestone> listMilestones(long planId) throws SQLException {
@@ -70,7 +133,7 @@ public class RecoveryPlanEJB {
         if (task == null || task.isBlank()) throw new IllegalArgumentException("task required");
 
         Milestone m = new Milestone();
-        m.setPlanId(planId);
+        m.setPlanId((long) planId);
         m.setStudyWeek(studyWeek);
         m.setTask(task);
         m.setDueDate(dueDate);
@@ -103,9 +166,10 @@ public class RecoveryPlanEJB {
         new MilestoneDAO().markDone(milestoneId, grade);
     }
 
-    // Attempt policy:
-    // attempt 2: focus on failed components only
-    // attempt 3: must include all components
+    // ─────────────────────────────────────────────
+    // PRIVATE HELPERS
+    // ─────────────────────────────────────────────
+
     private String defaultRecommendation(String studentId, String courseCode, int attemptNo) throws SQLException {
         AssessmentDAO assessmentDAO = new AssessmentDAO();
         StudentResultDAO resultDAO = new StudentResultDAO();
@@ -132,4 +196,3 @@ public class RecoveryPlanEJB {
         return sb.toString();
     }
 }
-

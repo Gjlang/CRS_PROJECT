@@ -109,9 +109,19 @@ public class EnrolmentDAO {
         }
     }
 
-    // Old approve()/reject() — kept for backward compatibility but now delegate to atomic versions
-    // If nothing else calls them, you may remove these safely.
-    /** @deprecated Use approvePending(enrolmentId, adminUserId) instead */
+    public Enrolment findApprovedById(long enrolmentId) throws SQLException {
+        String sql = "SELECT enrolment_id, student_id, course_code, attempt_no, eligibility_status, enrolment_status, " +
+                     "created_by_user_id, decided_by_user_id, decided_at, reject_reason, created_at " +
+                     "FROM enrolments WHERE enrolment_id=? AND enrolment_status='APPROVED'";
+        try (Connection con = DbUtil.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setLong(1, enrolmentId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return map(rs);
+                return null;
+            }
+        }
+    }
     @Deprecated
     public void approve(long enrolmentId) throws SQLException {
         approvePending(enrolmentId, 0L);

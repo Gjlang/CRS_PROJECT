@@ -1,103 +1,79 @@
-<%@ taglib prefix="c" uri="jakarta.tags.core" %>
-<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8"/>
-  <title>Academic - Recovery Plan</title>
-</head>
-<body style="font-family:Arial, sans-serif; padding:20px;">
+<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ taglib uri="jakarta.tags.core" prefix="c" %>
 
-<div style="padding:10px;background:#f4f4f4;margin-bottom:12px;">
-  <a href="${pageContext.request.contextPath}/dashboard.jsp">Dashboard</a>
-  | <a href="${pageContext.request.contextPath}/logout">Logout</a>
-  <c:if test="${sessionScope.role == 'COURSE_ADMIN'}">
-    | <a href="${pageContext.request.contextPath}/admin/users">User Management</a>
-    | <a href="${pageContext.request.contextPath}/admin/notification_history">Notification History</a>
-  </c:if>
-  <c:if test="${sessionScope.role == 'ACADEMIC_OFFICER'}">
-    | <a href="${pageContext.request.contextPath}/academic/eligibility">Eligibility</a>
-    | <a href="${pageContext.request.contextPath}/academic/enrolment">Enrolment</a>
-    | <a href="${pageContext.request.contextPath}/academic/recovery_plan">Recovery Plan</a>
-    | <a href="${pageContext.request.contextPath}/academic/report">Report</a>
-  </c:if>
-</div>
+<h2>Recovery Plan (Enrolment ID: ${enrolmentId})</h2>
 
-<h2>Academic - Recovery Plan</h2>
-
-<c:if test="${not empty message}">
-  <div style="padding:10px;background:#e7ffe7;border:1px solid #8bc48b;margin-bottom:10px;">${message}</div>
-</c:if>
 <c:if test="${not empty error}">
-  <div style="padding:10px;background:#ffe7e7;border:1px solid #c48b8b;margin-bottom:10px;">${error}</div>
+  <div style="color:red;">${error}</div>
 </c:if>
 
+<c:choose>
+  <c:when test="${empty plan}">
+    <h3>No plan yet</h3>
+    <form method="post" action="${pageContext.request.contextPath}/academic/recovery-plan">
+      <input type="hidden" name="action" value="createPlan"/>
+      <input type="hidden" name="enrolment_id" value="${enrolmentId}"/>
 
-<form method="post" action="${pageContext.request.contextPath}/academic/recovery_plan" style="border:1px solid #ddd;padding:12px;margin-bottom:20px;">
-  <input type="hidden" name="action" value="load"/>
-  <label>Student ID</label><br/>
-  <input name="student_id" required style="width:220px;"/><br/><br/>
-  <label>Course Code</label><br/>
-  <input name="course_code" required style="width:220px;"/><br/><br/>
-  <label>Attempt No (1-3)</label><br/>
-  <input name="attempt_no" type="number" min="1" max="3" value="2" required style="width:80px;"/><br/><br/>
-  <button type="submit">Load / Create Plan</button>
-</form>
+      <label>Recommendation:</label><br/>
+      <textarea name="recommendation" rows="4" cols="60" required></textarea><br/><br/>
 
-<c:if test="${not empty plan}">
-  <h3>Plan Details</h3>
-  <p>Plan ID: <b>${plan.planId}</b> | Student: <b>${plan.studentId}</b> | Course: <b>${plan.courseCode}</b> | Attempt: <b>${plan.attemptNo}</b></p>
+      <button type="submit">Create Recovery Plan</button>
+    </form>
+  </c:when>
 
-  <form method="post" action="${pageContext.request.contextPath}/academic/recovery_plan" style="border:1px solid #ddd;padding:12px;margin:10px 0;">
-    <input type="hidden" name="action" value="update_recommendation"/>
-    <input type="hidden" name="plan_id" value="${plan.planId}"/>
-    <label>Recommendation</label><br/>
-    <textarea name="recommendation" rows="6" style="width:700px;">${plan.recommendation}</textarea><br/><br/>
-    <button type="submit">Update Recommendation</button>
-  </form>
+  <c:otherwise>
+    <h3>Plan</h3>
+    <form method="post" action="${pageContext.request.contextPath}/academic/recovery-plan">
+      <input type="hidden" name="action" value="updatePlan"/>
+      <input type="hidden" name="enrolment_id" value="${enrolmentId}"/>
 
-  <h3>Milestones</h3>
-  <form method="post" action="${pageContext.request.contextPath}/academic/milestones" style="border:1px solid #ddd;padding:12px;margin-bottom:10px;">
-    <input type="hidden" name="action" value="add"/>
-    <input type="hidden" name="plan_id" value="${plan.planId}"/>
-    <label>Study Week</label>
-    <input name="study_week" type="number" min="1" required style="width:80px;"/>
-    <label style="margin-left:10px;">Task</label>
-    <input name="task" required style="width:360px;"/>
-    <label style="margin-left:10px;">Due Date</label>
-    <input name="due_date" type="date"/>
-    <button type="submit" style="margin-left:10px;">Add</button>
-  </form>
+      <textarea name="recommendation" rows="4" cols="60">${plan.recommendation}</textarea><br/><br/>
+      <button type="submit">Update Plan</button>
+    </form>
 
-  <table border="1" cellpadding="6" cellspacing="0">
-    <tr><th>ID</th><th>Week</th><th>Task</th><th>Due</th><th>Status</th><th>Grade</th><th>Actions</th></tr>
-    <c:forEach items="${milestones}" var="m">
+    <hr/>
+
+    <h3>Milestones</h3>
+
+    <form method="post" action="${pageContext.request.contextPath}/academic/recovery-plan">
+      <input type="hidden" name="action" value="addMilestone"/>
+      <input type="hidden" name="enrolment_id" value="${enrolmentId}"/>
+
+      <input name="title" placeholder="Milestone title" required/>
+      <input type="date" name="due_date"/>
+      <input name="remarks" placeholder="Remarks"/>
+      <button type="submit">Add</button>
+    </form>
+
+    <br/>
+
+    <table border="1" cellpadding="6">
       <tr>
-        <td>${m.milestoneId}</td>
-        <td>${m.studyWeek}</td>
-        <td>${m.task}</td>
-        <td>${m.dueDate}</td>
-        <td>${m.status}</td>
-        <td>${m.grade}</td>
-        <td>
-          <form method="post" action="${pageContext.request.contextPath}/academic/milestones" style="display:inline;">
-            <input type="hidden" name="action" value="done"/>
-            <input type="hidden" name="plan_id" value="${plan.planId}"/>
-            <input type="hidden" name="milestone_id" value="${m.milestoneId}"/>
-            <input name="grade" placeholder="Grade" style="width:80px;"/>
-            <button type="submit">Mark Done</button>
-          </form>
-          <form method="post" action="${pageContext.request.contextPath}/academic/milestones" style="display:inline;">
-            <input type="hidden" name="action" value="delete"/>
-            <input type="hidden" name="plan_id" value="${plan.planId}"/>
-            <input type="hidden" name="milestone_id" value="${m.milestoneId}"/>
-            <button type="submit">Delete</button>
-          </form>
-        </td>
+        <th>Title</th><th>Due</th><th>Status</th><th>Remarks</th><th>Action</th>
       </tr>
-    </c:forEach>
-  </table>
-</c:if>
 
-</body>
-</html>
+      <c:forEach var="m" items="${milestones}">
+        <tr>
+          <td>${m.title}</td>
+          <td>${m.dueDate}</td>
+          <td>${m.status}</td>
+          <td>${m.remarks}</td>
+          <td>
+            <form method="post" action="${pageContext.request.contextPath}/academic/recovery-plan" style="display:inline;">
+              <input type="hidden" name="action" value="updateMilestone"/>
+              <input type="hidden" name="enrolment_id" value="${enrolmentId}"/>
+              <input type="hidden" name="milestone_id" value="${m.milestoneId}"/>
+
+              <select name="status">
+                <option value="PENDING" ${m.status=='PENDING'?'selected':''}>PENDING</option>
+                <option value="DONE" ${m.status=='DONE'?'selected':''}>DONE</option>
+              </select>
+              <input name="remarks" value="${m.remarks}" />
+              <button type="submit">Save</button>
+            </form>
+          </td>
+        </tr>
+      </c:forEach>
+    </table>
+  </c:otherwise>
+</c:choose>

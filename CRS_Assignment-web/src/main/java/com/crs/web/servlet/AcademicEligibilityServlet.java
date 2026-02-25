@@ -22,13 +22,22 @@ public class AcademicEligibilityServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String studentId = req.getParameter("student_id");
-        try {
-            EligibilityResult r = eligibilityEJB.checkStudent(studentId);
-            req.setAttribute("result", r);
-        } catch (Exception e) {
-            req.setAttribute("error", "Failed: " + e.getMessage());
+
+        // 2.1 — input validation
+        if (studentId == null || studentId.isBlank()) {
+            req.setAttribute("error", "Student ID is required.");
+            doGet(req, resp);
+            return;
         }
-        req.getRequestDispatcher("/academic/eligibility.jsp").forward(req, resp);
+
+        try {
+            EligibilityResult result = eligibilityEJB.checkStudent(studentId.trim());
+            req.setAttribute("result", result);
+            req.setAttribute("studentId", studentId.trim()); // 2.1 — pass studentId to JSP
+            req.getRequestDispatcher("/academic/eligibility.jsp").forward(req, resp);
+        } catch (Exception e) {
+            req.setAttribute("error", e.getMessage());
+            doGet(req, resp);
+        }
     }
 }
-
