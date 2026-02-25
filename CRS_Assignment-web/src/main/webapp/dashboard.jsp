@@ -13,6 +13,7 @@
   | <a href="${pageContext.request.contextPath}/logout">Logout</a>
   <c:if test="${sessionScope.role == 'COURSE_ADMIN'}">
     | <a href="${pageContext.request.contextPath}/admin/users">User Management</a>
+    | <a href="${pageContext.request.contextPath}/admin/enrolments">Enrolment Approvals</a>
     | <a href="${pageContext.request.contextPath}/admin/notification_history">Notification History</a>
   </c:if>
   <c:if test="${sessionScope.role == 'ACADEMIC_OFFICER'}">
@@ -31,7 +32,6 @@
 <c:if test="${not empty error}">
   <div style="padding:10px;background:#ffe7e7;border:1px solid #c48b8b;margin-bottom:10px;">${error}</div>
 </c:if>
-
 
 <p>Welcome, <b>${sessionScope.name}</b> (<code>${sessionScope.role}</code>)</p>
 <p>Select a module from the navigation bar.</p>
