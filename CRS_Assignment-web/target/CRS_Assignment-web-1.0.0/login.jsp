@@ -1,8 +1,12 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <!DOCTYPE html>
 <html>
-<head><meta charset="UTF-8"/><title>CRS Login</title></head>
+<head>
+  <meta charset="UTF-8"/>
+  <title>CRS Login</title>
+</head>
 <body style="font-family:Arial, sans-serif; padding:20px;">
 <h2>CRS Login</h2>
 <c:if test="${not empty error}">

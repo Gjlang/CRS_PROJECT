@@ -10,6 +10,7 @@ com\crs\ejb\dto\ReportCourseRow.class
 com\crs\entity\StudentResult.class
 com\crs\entity\User.class
 com\crs\ejb\UserManagementEJB.class
+com\crs\ejb\MilestoneEJB.class
 com\crs\entity\Notification.class
 com\crs\dao\MilestoneDAO.class
 com\crs\ejb\AuthServiceEJB.class

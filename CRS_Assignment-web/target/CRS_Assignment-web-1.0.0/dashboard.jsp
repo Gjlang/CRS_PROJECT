@@ -17,8 +17,8 @@
     | <a href="${pageContext.request.contextPath}/admin/notification_history">Notification History</a>
   </c:if>
   <c:if test="${sessionScope.role == 'ACADEMIC_OFFICER'}">
-    | <a href="${pageContext.request.contextPath}/academic/eligibility">Eligibility</a>
-    | <a href="${pageContext.request.contextPath}/academic/enrolment">Enrolment</a>
+    | <a href="${pageContext.request.contextPath}/academic/eligibility">Eligibility</a> |
+	<a href="${pageContext.request.contextPath}/academic/enrolments">Enrolments</a>
     | <a href="${pageContext.request.contextPath}/academic/recovery_plan">Recovery Plan</a>
     | <a href="${pageContext.request.contextPath}/academic/report">Report</a>
   </c:if>
