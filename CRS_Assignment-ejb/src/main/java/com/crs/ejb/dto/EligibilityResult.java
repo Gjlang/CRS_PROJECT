@@ -37,7 +37,7 @@ public class EligibilityResult implements Serializable {
     public void setReasons(List<String> reasons) { this.reasons = reasons; }
 
     @Override public String toString() {
-        return "EligibilityResult{studentId='" + studentId + "', cgpa=" + cgpa + ", failedCourseCount=" + failedCourseCount + ", eligible=" + eligible + "}";
+        return "EligibilityResult{studentId='" + studentId + "', cgpa=" + cgpa +
+               ", failedCourseCount=" + failedCourseCount + ", eligible=" + eligible + "}";
     }
 }
-

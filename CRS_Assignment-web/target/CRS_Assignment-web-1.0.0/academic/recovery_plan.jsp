@@ -1,16 +1,26 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 <%@ taglib uri="jakarta.tags.core" prefix="c" %>
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Recovery Plan</title>
+</head>
+<body>
 
-<h2>Recovery Plan (Enrolment ID: ${enrolmentId})</h2>
+<h2>Recovery Plan (Enrolment ID: <c:out value="${enrolmentId}"/>)</h2>
 
 <c:if test="${not empty error}">
-  <div style="color:red;">${error}</div>
+  <div style="color:red; font-weight:bold;"><c:out value="${error}"/></div>
+</c:if>
+
+<c:if test="${not empty message}">
+  <div style="color:green;"><c:out value="${message}"/></div>
 </c:if>
 
 <c:choose>
   <c:when test="${empty plan}">
     <h3>No plan yet</h3>
-    <form method="post" action="${pageContext.request.contextPath}/academic/recovery-plan">
+    <form method="post" action="${pageContext.request.contextPath}/academic/recovery_plan">
       <input type="hidden" name="action" value="createPlan"/>
       <input type="hidden" name="enrolment_id" value="${enrolmentId}"/>
 
@@ -22,12 +32,12 @@
   </c:when>
 
   <c:otherwise>
-    <h3>Plan</h3>
-    <form method="post" action="${pageContext.request.contextPath}/academic/recovery-plan">
+    <h3>Plan (ID: <c:out value="${plan.planId}"/>)</h3>
+    <form method="post" action="${pageContext.request.contextPath}/academic/recovery_plan">
       <input type="hidden" name="action" value="updatePlan"/>
       <input type="hidden" name="enrolment_id" value="${enrolmentId}"/>
 
-      <textarea name="recommendation" rows="4" cols="60">${plan.recommendation}</textarea><br/><br/>
+      <textarea name="recommendation" rows="4" cols="60"><c:out value="${plan.recommendation}"/></textarea><br/><br/>
       <button type="submit">Update Plan</button>
     </form>
 
@@ -35,7 +45,7 @@
 
     <h3>Milestones</h3>
 
-    <form method="post" action="${pageContext.request.contextPath}/academic/recovery-plan">
+    <form method="post" action="${pageContext.request.contextPath}/academic/recovery_plan">
       <input type="hidden" name="action" value="addMilestone"/>
       <input type="hidden" name="enrolment_id" value="${enrolmentId}"/>
 
@@ -54,21 +64,21 @@
 
       <c:forEach var="m" items="${milestones}">
         <tr>
-          <td>${m.title}</td>
-          <td>${m.dueDate}</td>
-          <td>${m.status}</td>
-          <td>${m.remarks}</td>
+          <td><c:out value="${m.title}"/></td>
+          <td><c:out value="${m.dueDate}"/></td>
+          <td><c:out value="${m.status}"/></td>
+          <td><c:out value="${m.remarks}"/></td>
           <td>
-            <form method="post" action="${pageContext.request.contextPath}/academic/recovery-plan" style="display:inline;">
+            <form method="post" action="${pageContext.request.contextPath}/academic/recovery_plan" style="display:inline;">
               <input type="hidden" name="action" value="updateMilestone"/>
               <input type="hidden" name="enrolment_id" value="${enrolmentId}"/>
               <input type="hidden" name="milestone_id" value="${m.milestoneId}"/>
 
               <select name="status">
-                <option value="PENDING" ${m.status=='PENDING'?'selected':''}>PENDING</option>
-                <option value="DONE" ${m.status=='DONE'?'selected':''}>DONE</option>
+                <option value="PENDING" <c:if test="${m.status == 'PENDING'}">selected</c:if>>PENDING</option>
+                <option value="DONE"    <c:if test="${m.status == 'DONE'}">selected</c:if>>DONE</option>
               </select>
-              <input name="remarks" value="${m.remarks}" />
+              <input name="remarks" value="<c:out value="${m.remarks}"/>"/>
               <button type="submit">Save</button>
             </form>
           </td>
@@ -77,3 +87,6 @@
     </table>
   </c:otherwise>
 </c:choose>
+
+</body>
+</html>

@@ -24,7 +24,7 @@
   </h3>
 
   <p>CGPA: ${result.cgpa}</p>
-  <p>Failed Courses: ${result.failedCount}</p>
+  <p>Failed Courses: ${result.failedCourseCount}</p>
 
   <c:if test="${not empty result.reasons}">
     <p><b>Reasons:</b></p>
