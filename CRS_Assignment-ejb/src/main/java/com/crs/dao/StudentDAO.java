@@ -34,7 +34,7 @@ public class StudentDAO {
         // Count distinct courses where the latest attempt has at least one failed component.
         String sql = """
             SELECT COUNT(*) AS total_failed FROM (
-              SELECT course_code
+              SELECT latest.course_code AS course_code
               FROM (
                 SELECT course_code, MAX(attempt_no) AS max_attempt
                 FROM student_results
@@ -42,11 +42,14 @@ public class StudentDAO {
                 GROUP BY course_code
               ) latest
               JOIN student_results r
-                ON r.student_id=? AND r.course_code=latest.course_code AND r.attempt_no=latest.max_attempt
-              GROUP BY r.course_code
+                ON r.student_id=?
+               AND r.course_code=latest.course_code
+               AND r.attempt_no=latest.max_attempt
+              GROUP BY latest.course_code
               HAVING SUM(CASE WHEN r.failed=1 THEN 1 ELSE 0 END) > 0
             ) x
             """;
+
         try (Connection con = DbUtil.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, studentId);
