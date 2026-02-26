@@ -9,13 +9,13 @@ public class Enrolment implements Serializable {
     private String eligibilityStatus; // PASS/FAIL
     private String enrolmentStatus;   // PENDING/APPROVED/REJECTED
     private LocalDateTime createdAt;
-
     // New fields
     private Long createdByUserId;
     private Long decidedByUserId;
     private LocalDateTime decidedAt;
     private String rejectReason;
-
+    // Display-only (populated from JOIN to courses table, not persisted)
+    private String courseTitle;
     public Enrolment() {}
     public Enrolment(long enrolmentId, String studentId, String courseCode, int attemptNo, String eligibilityStatus, String enrolmentStatus, LocalDateTime createdAt) {
         this.enrolmentId = enrolmentId;
@@ -40,7 +40,6 @@ public class Enrolment implements Serializable {
     public void setEnrolmentStatus(String enrolmentStatus) { this.enrolmentStatus = enrolmentStatus; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
-
     // Getters & Setters for new fields
     public Long getCreatedByUserId() { return createdByUserId; }
     public void setCreatedByUserId(Long createdByUserId) { this.createdByUserId = createdByUserId; }
@@ -50,11 +49,12 @@ public class Enrolment implements Serializable {
     public void setDecidedAt(LocalDateTime decidedAt) { this.decidedAt = decidedAt; }
     public String getRejectReason() { return rejectReason; }
     public void setRejectReason(String rejectReason) { this.rejectReason = rejectReason; }
-
+    public String getCourseTitle() { return courseTitle; }
+    public void setCourseTitle(String courseTitle) { this.courseTitle = courseTitle; }
     @Override public String toString() {
         return "Enrolment{id=" + enrolmentId + ", studentId='" + studentId + "', courseCode='" + courseCode + "', attemptNo=" + attemptNo +
                 ", eligibilityStatus='" + eligibilityStatus + "', enrolmentStatus='" + enrolmentStatus +
-                "', createdByUserId=" + createdByUserId + ", decidedByUserId=" + decidedByUserId +
+                ", createdByUserId=" + createdByUserId + ", decidedByUserId=" + decidedByUserId +
                 ", decidedAt=" + decidedAt + ", rejectReason='" + rejectReason + "'}";
     }
 }

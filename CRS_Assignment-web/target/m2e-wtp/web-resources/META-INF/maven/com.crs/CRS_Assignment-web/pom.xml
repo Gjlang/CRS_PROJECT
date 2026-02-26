@@ -1,0 +1,62 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.crs</groupId>
+    <artifactId>CRS_Assignment-parent</artifactId>
+    <version>1.0.0</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
+
+  <artifactId>CRS_Assignment-web</artifactId>
+  <packaging>war</packaging>
+
+  <dependencies>
+    <!-- Compile-time only: Payara provides at runtime -->
+    <dependency>
+      <groupId>jakarta.platform</groupId>
+      <artifactId>jakarta.jakartaee-web-api</artifactId>
+      <version>${jakartaee.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- Web depends on EJB module so it can see com.crs.ejb.* and DTOs/entities -->
+    <dependency>
+      <groupId>com.crs</groupId>
+      <artifactId>CRS_Assignment-ejb</artifactId>
+      <version>1.0.0</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- JSTL for JSP (Jakarta EE) -->
+    <dependency>
+      <groupId>org.glassfish.web</groupId>
+      <artifactId>jakarta.servlet.jsp.jstl</artifactId>
+      <version>3.0.1</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-war-plugin</artifactId>
+        <version>3.4.0</version>
+        <configuration>
+          <failOnMissingWebXml>false</failOnMissingWebXml>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.13.0</version>
+        <configuration>
+          <release>${maven.compiler.release}</release>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

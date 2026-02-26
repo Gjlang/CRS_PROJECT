@@ -28,52 +28,65 @@ public class RecoveryPlanServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String enrolmentIdStr = req.getParameter("enrolment_id");
 
-        if (enrolmentIdStr != null && !enrolmentIdStr.isBlank()) {
-            try {
-                long enrolmentId = Long.parseLong(enrolmentIdStr);
-                RecoveryPlan plan = recoveryPlanEJB.getPlanByEnrolment(enrolmentId);
-                List<Milestone> milestones = milestoneEJB.list(enrolmentId);
+        if (enrolmentIdStr == null || enrolmentIdStr.isBlank()) {
+            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing enrolment_id");
+            return;
+        }
 
-                req.setAttribute("enrolmentId", enrolmentId);
-                req.setAttribute("plan", plan);
-                req.setAttribute("milestones", milestones);
-            } catch (Exception e) {
-                req.setAttribute("error", "Failed to load plan: " + e.getMessage());
-            }
+        try {
+            long enrolmentId = Long.parseLong(enrolmentIdStr);
+            RecoveryPlan plan = recoveryPlanEJB.getPlanByEnrolmentId(enrolmentId);
+            List<Milestone> milestones = milestoneEJB.list(enrolmentId);
+
+            req.setAttribute("enrolmentId", enrolmentId);
+            req.setAttribute("plan", plan);
+            req.setAttribute("milestones", milestones);
+        } catch (NumberFormatException e) {
+            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid enrolment_id");
+            return;
+        } catch (Exception e) {
+            req.setAttribute("error", "Failed to load plan: " + e.getMessage());
         }
 
         req.getRequestDispatcher("/academic/recovery_plan.jsp").forward(req, resp);
     }
 
     // ─────────────────────────────────────────────
-    // doPost — handle all actions
+    // doPost — enrolment-based actions only
     // ─────────────────────────────────────────────
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String action = req.getParameter("action");
+        String enrolmentIdStr = req.getParameter("enrolment_id");
         long userId = (long) req.getSession().getAttribute("userId");
 
-        try {
-            // ── NEW: enrolment-based actions ──────────────────────────────
+        if (enrolmentIdStr == null || enrolmentIdStr.isBlank()) {
+            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing enrolment_id");
+            return;
+        }
 
+        long enrolmentId;
+        try {
+            enrolmentId = Long.parseLong(enrolmentIdStr);
+        } catch (NumberFormatException e) {
+            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid enrolment_id");
+            return;
+        }
+
+        try {
             if ("createPlan".equals(action)) {
-                long enrolmentId = Long.parseLong(req.getParameter("enrolment_id"));
                 String recommendation = req.getParameter("recommendation");
-                recoveryPlanEJB.createPlan(enrolmentId, recommendation, userId);
-                req.setAttribute("message", "Recovery plan created.");
+                recoveryPlanEJB.createPlanForApprovedEnrolment(enrolmentId, recommendation, userId);
                 resp.sendRedirect(req.getContextPath() + "/academic/recovery_plan?enrolment_id=" + enrolmentId);
                 return;
 
             } else if ("updatePlan".equals(action)) {
-                long enrolmentId = Long.parseLong(req.getParameter("enrolment_id"));
                 String recommendation = req.getParameter("recommendation");
                 recoveryPlanEJB.updateRecommendation(enrolmentId, recommendation);
-                req.setAttribute("message", "Recommendation updated.");
                 resp.sendRedirect(req.getContextPath() + "/academic/recovery_plan?enrolment_id=" + enrolmentId);
                 return;
 
             } else if ("addMilestone".equals(action)) {
-                long enrolmentId = Long.parseLong(req.getParameter("enrolment_id"));
                 String title = req.getParameter("title");
                 String due = req.getParameter("due_date"); // yyyy-MM-dd
                 LocalDate dueDate = (due == null || due.isBlank()) ? null : LocalDate.parse(due);
@@ -83,7 +96,6 @@ public class RecoveryPlanServlet extends HttpServlet {
                 return;
 
             } else if ("updateMilestone".equals(action)) {
-                long enrolmentId = Long.parseLong(req.getParameter("enrolment_id"));
                 long milestoneId = Long.parseLong(req.getParameter("milestone_id"));
                 String status = req.getParameter("status");
                 String remarks = req.getParameter("remarks");
@@ -91,30 +103,18 @@ public class RecoveryPlanServlet extends HttpServlet {
                 resp.sendRedirect(req.getContextPath() + "/academic/recovery_plan?enrolment_id=" + enrolmentId);
                 return;
 
-            // ── LEGACY: student+course+attempt based actions ──────────────
-
-            } else if ("load".equals(action)) {
-                String studentId = req.getParameter("student_id");
-                String courseCode = req.getParameter("course_code");
-                int attemptNo = Integer.parseInt(req.getParameter("attempt_no"));
-                RecoveryPlan plan = recoveryPlanEJB.getOrCreatePlan(studentId, courseCode, attemptNo, userId);
-                req.setAttribute("plan", plan);
-                req.setAttribute("milestones", recoveryPlanEJB.listMilestones(plan.getPlanId()));
-
-            } else if ("update_recommendation".equals(action)) {
-                long planId = Long.parseLong(req.getParameter("plan_id"));
-                String rec = req.getParameter("recommendation");
-                recoveryPlanEJB.updateRecommendation(planId, rec, true); // legacy overload
-                req.setAttribute("message", "Recommendation updated.");
+            } else {
+                resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unknown or unsupported action.");
+                return;
             }
 
-        } catch (IllegalStateException | IllegalArgumentException e) {
+        } catch (SecurityException | IllegalStateException | IllegalArgumentException e) {
             req.setAttribute("error", e.getMessage());
         } catch (Exception e) {
             req.setAttribute("error", "Failed: " + e.getMessage());
         }
 
-        // Fall through to JSP for legacy actions or on error
+        // On error: reload plan page with error message
         doGet(req, resp);
     }
 }

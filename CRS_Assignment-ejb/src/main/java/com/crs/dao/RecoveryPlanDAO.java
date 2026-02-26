@@ -1,15 +1,21 @@
 package com.crs.dao;
+
 import com.crs.entity.RecoveryPlan;
 import com.crs.util.DbUtil;
+
 import java.sql.*;
 import java.time.LocalDateTime;
+
 public class RecoveryPlanDAO {
 
-    // 3.2 — new: find plan by enrolment_id
+    /**
+     * STRICT: Find a recovery plan only by enrolment_id.
+     * Returns null if not found.
+     */
     public RecoveryPlan findByEnrolmentId(long enrolmentId) throws SQLException {
         String sql = "SELECT plan_id, student_id, course_code, attempt_no, recommendation, " +
                      "created_by_user_id, created_at, enrolment_id " +
-                     "FROM recovery_plans WHERE enrolment_id=?";
+                     "FROM recovery_plans WHERE enrolment_id = ?";
         try (Connection con = DbUtil.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setLong(1, enrolmentId);
@@ -19,26 +25,13 @@ public class RecoveryPlanDAO {
         }
     }
 
-    // Original — find by student + course + attempt
-    public RecoveryPlan findByStudentCourseAttempt(String studentId, String courseCode, int attemptNo) throws SQLException {
-        String sql = "SELECT plan_id, student_id, course_code, attempt_no, recommendation, " +
-                     "created_by_user_id, created_at, enrolment_id " +
-                     "FROM recovery_plans WHERE student_id=? AND course_code=? AND attempt_no=?";
-        try (Connection con = DbUtil.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, studentId);
-            ps.setString(2, courseCode);
-            ps.setInt(3, attemptNo);
-            try (ResultSet rs = ps.executeQuery()) {
-                return rs.next() ? map(rs) : null;
-            }
-        }
-    }
-
-    // 3.2 — new insert() replaces create(), includes enrolment_id
+    /**
+     * STRICT: Insert a new recovery plan tied to an enrolment_id.
+     * Throws IllegalStateException if UNIQUE(enrolment_id) is violated (one plan per enrolment).
+     */
     public long insert(RecoveryPlan p) throws SQLException {
-        String sql = "INSERT INTO recovery_plans(student_id, course_code, attempt_no, recommendation, " +
-                     "created_by_user_id, enrolment_id, created_at) VALUES(?,?,?,?,?,?,NOW())";
+        String sql = "INSERT INTO recovery_plans (student_id, course_code, attempt_no, recommendation, " +
+                     "created_by_user_id, enrolment_id, created_at) VALUES (?,?,?,?,?,?,NOW())";
         try (Connection con = DbUtil.getConnection();
              PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, p.getStudentId());
@@ -54,32 +47,47 @@ public class RecoveryPlanDAO {
             ps.executeUpdate();
             try (ResultSet keys = ps.getGeneratedKeys()) {
                 if (keys.next()) return keys.getLong(1);
-                throw new SQLException("Failed to get generated plan_id");
+                throw new SQLException("Insert succeeded but no generated plan_id returned.");
             }
+        } catch (SQLIntegrityConstraintViolationException dup) {
+            // Catches DB-level UNIQUE(enrolment_id) violation as a safety net
+            throw new IllegalStateException("Recovery plan already exists for this enrolment.", dup);
         }
     }
 
-    // Original create() — kept for backward compatibility, delegates to insert()
-    /** @deprecated Use insert(RecoveryPlan) instead */
-    @Deprecated
-    public long create(RecoveryPlan p) throws SQLException {
-        return insert(p);
-    }
-
-    // Shared — updateRecommendation (unchanged)
+    /**
+     * Update recommendation by plan_id.
+     */
     public void updateRecommendation(long planId, String recommendation) throws SQLException {
-        String sql = "UPDATE recovery_plans SET recommendation=? WHERE plan_id=?";
+        String sql = "UPDATE recovery_plans SET recommendation = ? WHERE plan_id = ?";
         try (Connection con = DbUtil.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, recommendation);
             ps.setLong(2, planId);
-            ps.executeUpdate();
+            int updated = ps.executeUpdate();
+            if (updated == 0) throw new IllegalStateException("No recovery plan found with plan_id: " + planId);
         }
     }
 
-    // Original — delete (unchanged)
+    /**
+     * Update recommendation by enrolment_id (alternative entry point from EJB).
+     */
+    public void updateRecommendationByEnrolmentId(long enrolmentId, String recommendation) throws SQLException {
+        String sql = "UPDATE recovery_plans SET recommendation = ? WHERE enrolment_id = ?";
+        try (Connection con = DbUtil.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, recommendation);
+            ps.setLong(2, enrolmentId);
+            int updated = ps.executeUpdate();
+            if (updated == 0) throw new IllegalStateException("No recovery plan found for enrolment_id: " + enrolmentId);
+        }
+    }
+
+    /**
+     * Delete a plan by plan_id.
+     */
     public void delete(long planId) throws SQLException {
-        String sql = "DELETE FROM recovery_plans WHERE plan_id=?";
+        String sql = "DELETE FROM recovery_plans WHERE plan_id = ?";
         try (Connection con = DbUtil.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setLong(1, planId);
@@ -87,7 +95,10 @@ public class RecoveryPlanDAO {
         }
     }
 
-    // 3.2 — updated map() to include enrolment_id
+    // ─────────────────────────────────────────────
+    // PRIVATE HELPERS
+    // ─────────────────────────────────────────────
+
     private RecoveryPlan map(ResultSet rs) throws SQLException {
         Timestamp ts = rs.getTimestamp("created_at");
         LocalDateTime created = (ts == null) ? null : ts.toLocalDateTime();

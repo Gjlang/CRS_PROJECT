@@ -66,6 +66,30 @@ public class EnrolmentDAO {
         return list;
     }
 
+    // NEW — list pending with course title (JOIN to courses table)
+    public List<Enrolment> listPendingWithCourseTitle() throws SQLException {
+        String sql =
+            "SELECT e.enrolment_id, e.student_id, e.course_code, c.course_title, e.attempt_no, " +
+            "e.eligibility_status, e.enrolment_status, e.created_by_user_id, e.decided_by_user_id, " +
+            "e.decided_at, e.reject_reason, e.created_at " +
+            "FROM enrolments e " +
+            "JOIN courses c ON c.course_code = e.course_code " +
+            "WHERE e.enrolment_status = 'PENDING' " +
+            "ORDER BY e.created_at DESC";
+
+        List<Enrolment> list = new ArrayList<>();
+        try (Connection con = DbUtil.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                Enrolment e = map(rs);
+                e.setCourseTitle(rs.getString("course_title"));
+                list.add(e);
+            }
+        }
+        return list;
+    }
+
     // 3.3 — list by creator ("My Requests")
     public List<Enrolment> listByCreator(long createdByUserId) throws SQLException {
         String sql = "SELECT enrolment_id, student_id, course_code, attempt_no, eligibility_status, enrolment_status, " +
@@ -109,6 +133,20 @@ public class EnrolmentDAO {
         }
     }
 
+    // NEW — find any enrolment by ID regardless of status (used by EJB for status checks)
+    public Enrolment findById(long enrolmentId) throws SQLException {
+        String sql = "SELECT enrolment_id, student_id, course_code, attempt_no, eligibility_status, enrolment_status, " +
+                     "created_by_user_id, decided_by_user_id, decided_at, reject_reason, created_at " +
+                     "FROM enrolments WHERE enrolment_id=?";
+        try (Connection con = DbUtil.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setLong(1, enrolmentId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? map(rs) : null;
+            }
+        }
+    }
+
     public Enrolment findApprovedById(long enrolmentId) throws SQLException {
         String sql = "SELECT enrolment_id, student_id, course_code, attempt_no, eligibility_status, enrolment_status, " +
                      "created_by_user_id, decided_by_user_id, decided_at, reject_reason, created_at " +
@@ -117,15 +155,16 @@ public class EnrolmentDAO {
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setLong(1, enrolmentId);
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return map(rs);
-                return null;
+                return rs.next() ? map(rs) : null;
             }
         }
     }
+
     @Deprecated
     public void approve(long enrolmentId) throws SQLException {
         approvePending(enrolmentId, 0L);
     }
+
     /** @deprecated Use rejectPending(enrolmentId, adminUserId, reason) instead */
     @Deprecated
     public void reject(long enrolmentId) throws SQLException {
