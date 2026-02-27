@@ -1,37 +1,24 @@
+<%@ page contentType="text/html;charset=UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8"/>
-  <title>Academic - Milestones</title>
-</head>
-<body style="font-family:Arial, sans-serif; padding:20px;">
+<%
+  request.setAttribute("pageTitle", "Milestones");
+%>
+<jsp:include page="/WEB-INF/views/common/_layout_start.jsp" />
 
-<div style="padding:10px;background:#f4f4f4;margin-bottom:12px;">
-  <a href="${pageContext.request.contextPath}/dashboard.jsp">Dashboard</a>
-  | <a href="${pageContext.request.contextPath}/logout">Logout</a>
-  <c:if test="${sessionScope.role == 'COURSE_ADMIN'}">
-    | <a href="${pageContext.request.contextPath}/admin/users">User Management</a>
-    | <a href="${pageContext.request.contextPath}/admin/notification_history">Notification History</a>
+<h1 class="pageTitle">Milestones</h1>
+
+<div class="card">
+
+  <c:if test="${not empty message}">
+    <div style="padding:10px;background:#e7ffe7;border:1px solid #8bc48b;margin-bottom:10px;">${message}</div>
   </c:if>
-  <c:if test="${sessionScope.role == 'ACADEMIC_OFFICER'}">
-    | <a href="${pageContext.request.contextPath}/academic/eligibility">Eligibility</a>
-    | <a href="${pageContext.request.contextPath}/academic/enrolment">Enrolment</a>
-    | <a href="${pageContext.request.contextPath}/academic/recovery_plan">Recovery Plan</a>
-    | <a href="${pageContext.request.contextPath}/academic/report">Report</a>
+  <c:if test="${not empty error}">
+    <div style="padding:10px;background:#ffe7e7;border:1px solid #c48b8b;margin-bottom:10px;">${error}</div>
   </c:if>
+
+  <p>Use Recovery Plan page to manage milestones.</p>
+
 </div>
 
-<h2>Academic - Milestones</h2>
-
-<c:if test="${not empty message}">
-  <div style="padding:10px;background:#e7ffe7;border:1px solid #8bc48b;margin-bottom:10px;">${message}</div>
-</c:if>
-<c:if test="${not empty error}">
-  <div style="padding:10px;background:#ffe7e7;border:1px solid #c48b8b;margin-bottom:10px;">${error}</div>
-</c:if>
-
-<p>Use Recovery Plan page to manage milestones.</p>
-</body>
-</html>
+<jsp:include page="/WEB-INF/views/common/_layout_end.jsp" />
