@@ -1,6 +1,7 @@
 com\crs\ejb\EnrolmentEJB.class
 com\crs\entity\Student.class
 com\crs\ejb\dto\EligibilityResult.class
+com\crs\ejb\RecoverySummaryReportEJB.class
 com\crs\ejb\EligibilityEJB.class
 com\crs\dao\CourseDAO.class
 com\crs\util\EmailUtil.class
@@ -16,8 +17,10 @@ com\crs\dao\MilestoneDAO.class
 com\crs\ejb\AuthServiceEJB.class
 com\crs\dao\EnrolmentDAO.class
 com\crs\dao\StudentDAO.class
+com\crs\ejb\dto\RecoverySummaryRow.class
 com\crs\dao\UserDAO.class
 com\crs\entity\Enrolment.class
+com\crs\dao\RecoverySummaryReportDAO.class
 com\crs\entity\Course.class
 com\crs\ejb\dto\ReportData.class
 com\crs\dao\RecoveryPlanDAO.class
