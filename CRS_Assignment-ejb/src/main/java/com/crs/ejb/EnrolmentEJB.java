@@ -1,80 +1,123 @@
 package com.crs.ejb;
+
 import com.crs.dao.EnrolmentDAO;
 import com.crs.ejb.dto.EligibilityResult;
+import com.crs.ejb.exception.BusinessException;
 import com.crs.entity.Enrolment;
+
 import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
+
 import java.sql.SQLException;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 @Stateless
 public class EnrolmentEJB {
+
+    private static final Logger LOG = Logger.getLogger(EnrolmentEJB.class.getName());
+
     @EJB
     private EligibilityEJB eligibilityEJB;
+
     @EJB
     private NotificationEJB notificationEJB;
 
-    // 4.1 — createdByUserId added to signature
+    // ✅ Phase 6: don't new DAO repeatedly
+    private final EnrolmentDAO enrolmentDAO = new EnrolmentDAO();
+
     public long createEnrolment(String studentId, String courseCode, long createdByUserId) throws SQLException {
         if (studentId == null || studentId.isBlank()) throw new IllegalArgumentException("studentId is required.");
         if (courseCode == null || courseCode.isBlank()) throw new IllegalArgumentException("courseCode is required.");
-        studentId = studentId.trim();
-        courseCode = courseCode.trim().toUpperCase();
-        EnrolmentDAO dao = new EnrolmentDAO();
-        int maxAttempt = dao.getMaxAttempt(studentId, courseCode);
+
+        final String cleanStudentId = studentId.trim();
+        final String cleanCourseCode = courseCode.trim().toUpperCase();
+
+        int maxAttempt = enrolmentDAO.getMaxAttempt(studentId, courseCode);
         if (maxAttempt >= 3) {
-            throw new IllegalStateException("Course retrieval policy: max 3 attempts per course. Current max attempt = " + maxAttempt);
+            // ✅ Phase 6: business-level exception (not “server crash”)
+            throw new BusinessException("Course recovery policy: max 3 attempts per course. Current max attempt = " + maxAttempt);
         }
+
         int nextAttempt = maxAttempt + 1;
+
         EligibilityResult er = eligibilityEJB.checkStudent(studentId);
 
-        // 4.2 — strict eligibility enforcement: block if FAIL
+        // ✅ strict eligibility enforcement
         if (!er.isEligible()) {
-            throw new IllegalStateException("Not eligible for enrolment: " + String.join("; ", er.getReasons()));
+            throw new BusinessException("Not eligible for enrolment: " + String.join("; ", er.getReasons()));
         }
 
         Enrolment e = new Enrolment();
         e.setStudentId(studentId);
         e.setCourseCode(courseCode);
         e.setAttemptNo(nextAttempt);
-        e.setEligibilityStatus("PASS"); // always PASS here since FAIL is blocked above
+        e.setEligibilityStatus("PASS");
         e.setEnrolmentStatus("PENDING");
-
-        // 4.3 — set createdByUserId into entity before insert
         e.setCreatedByUserId(createdByUserId);
 
-        long id = dao.createPending(e);
+        long id = enrolmentDAO.createPending(e);
+
+        // ✅ Phase 6: audit log
+        LOG.info(() -> "ENROLMENT_CREATED enrolmentId=" + id +
+                " studentId=" + studentId +
+                " courseCode=" + courseCode +
+                " attemptNo=" + nextAttempt +
+                " createdByUserId=" + createdByUserId);
+
+        // ✅ Phase 6: notification must not break DB transaction
         if (notificationEJB != null) {
-            notificationEJB.sendMilestoneReminderEmail(
-                "student@example.com",
-                "Enrolment request created: " + studentId + " -> " + courseCode,
-                "Your enrolment request is " + e.getEnrolmentStatus() + " (Eligibility: " + e.getEligibilityStatus() + ").");
+            try {
+                // TODO: replace recipient_email with real student email if available in DB
+                notificationEJB.sendMilestoneReminderEmail(
+                        "student@example.com",
+                        "Enrolment request created: " + studentId + " -> " + courseCode,
+                        "Your enrolment request is PENDING (Eligibility: PASS)."
+                );
+            } catch (Exception ex) {
+                LOG.log(Level.WARNING, "Notification failed for enrolmentId=" + id + " (ignored)", ex);
+            }
         }
+
         return id;
     }
 
-    // Original listPending() — kept for academic officer use
     public List<Enrolment> listPending() throws SQLException {
-        return new EnrolmentDAO().listPending();
+        return enrolmentDAO.listPending();
     }
 
-    // 4.4 — new list methods split for admin vs academic
     public List<Enrolment> listPendingForAdmin() throws SQLException {
-        return new EnrolmentDAO().listPendingForAdmin();
+        return enrolmentDAO.listPendingForAdmin();
     }
 
     public List<Enrolment> listMyRequests(long createdByUserId) throws SQLException {
-        return new EnrolmentDAO().listByCreator(createdByUserId);
+        return enrolmentDAO.listByCreator(createdByUserId);
     }
 
-    // 4.5 — approve/reject with adminUserId + reason + validation
     public void approve(long enrolmentId, long adminUserId) throws SQLException {
-        int updated = new EnrolmentDAO().approvePending(enrolmentId, adminUserId);
-        if (updated == 0) throw new IllegalStateException("Cannot approve: enrolment not found or already decided.");
+        int updated = enrolmentDAO.approvePending(enrolmentId, adminUserId);
+
+        if (updated == 0) {
+            throw new BusinessException("Cannot approve: enrolment not found or already decided.");
+        }
+
+        LOG.info(() -> "ENROLMENT_APPROVED enrolmentId=" + enrolmentId + " adminUserId=" + adminUserId);
     }
 
     public void reject(long enrolmentId, long adminUserId, String reason) throws SQLException {
-        if (reason == null || reason.isBlank()) throw new IllegalArgumentException("Reject reason is required.");
-        int updated = new EnrolmentDAO().rejectPending(enrolmentId, adminUserId, reason.trim());
-        if (updated == 0) throw new IllegalStateException("Cannot reject: enrolment not found or already decided.");
+        if (reason == null || reason.isBlank()) {
+            throw new IllegalArgumentException("Reject reason is required.");
+        }
+
+        int updated = enrolmentDAO.rejectPending(enrolmentId, adminUserId, reason.trim());
+
+        if (updated == 0) {
+            throw new BusinessException("Cannot reject: enrolment not found or already decided.");
+        }
+
+        LOG.info(() -> "ENROLMENT_REJECTED enrolmentId=" + enrolmentId +
+                " adminUserId=" + adminUserId +
+                " reasonLength=" + reason.trim().length());
     }
 }
