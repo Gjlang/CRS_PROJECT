@@ -38,9 +38,9 @@
         <td>${e.rejectReason}</td>
         <td>
           <c:if test="${e.enrolmentStatus == 'APPROVED'}">
-            <a href="${pageContext.request.contextPath}/academic/recovery-plan?enrolment_id=${e.enrolmentId}">
-              Recovery Plan
-            </a>
+           <a href="${pageContext.request.contextPath}/academic/recovery_plan?enrolment_id=${e.enrolmentId}">
+			  Recovery Plan
+			</a>
           </c:if>
         </td>
       </tr>

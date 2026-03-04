@@ -38,7 +38,7 @@
       </a>
 
     <% } else if ("ACADEMIC_OFFICER".equals(role)) { %>
-      <a href="<%= request.getContextPath() %>/academic/dashboard"
+      <a href="<%= request.getContextPath() %>/academic/enrolments"
          class="<%= "academic_dashboard".equals(active) ? "active" : "" %>">
         Dashboard
       </a>
@@ -53,12 +53,12 @@
         Enrolments
       </a>
 
-      <a href="<%= request.getContextPath() %>/academic/recovery_plan"
+      <a href="<%= request.getContextPath() %>/academic/enrolments"
          class="<%= "academic_recovery_plan".equals(active) ? "active" : "" %>">
         Recovery Plan
       </a>
 
-      <a href="<%= request.getContextPath() %>/academic/milestones"
+      <a href="<%= request.getContextPath() %>/academic/enrolments"
          class="<%= "academic_milestones".equals(active) ? "active" : "" %>">
         Milestones
       </a>

@@ -3,6 +3,7 @@ com\crs\web\servlet\AcademicEnrolmentServlet.class
 com\crs\web\servlet\AdminEnrolmentApprovalServlet.class
 com\crs\web\servlet\ReportServlet.class
 com\crs\web\servlet\AcademicEligibilityServlet.class
+com\crs\web\servlet\AcademicDashboardServlet.class
 com\crs\web\servlet\MilestoneServlet.class
 com\crs\web\filter\NoCacheFilter.class
 com\crs\web\servlet\AdminRecoverySummaryServlet.class

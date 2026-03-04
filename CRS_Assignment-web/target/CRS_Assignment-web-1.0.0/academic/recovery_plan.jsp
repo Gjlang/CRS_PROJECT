@@ -19,7 +19,7 @@
   <c:choose>
     <c:when test="${empty plan}">
       <h3>No plan yet</h3>
-      <form method="post" action="${pageContext.request.contextPath}/academic/recovery_plan">
+      <form method="post" action="${planActionUrl}">
         <input type="hidden" name="action" value="createPlan"/>
         <input type="hidden" name="enrolment_id" value="${enrolmentId}"/>
         <label>Recommendation:</label><br/>
@@ -30,7 +30,7 @@
 
     <c:otherwise>
       <h3>Plan (ID: <c:out value="${plan.planId}"/>)</h3>
-      <form method="post" action="${pageContext.request.contextPath}/academic/recovery_plan">
+      <form method="post" action="${planActionUrl}">
         <input type="hidden" name="action" value="updatePlan"/>
         <input type="hidden" name="enrolment_id" value="${enrolmentId}"/>
         <textarea name="recommendation" rows="4" cols="60"><c:out value="${plan.recommendation}"/></textarea><br/><br/>
@@ -40,7 +40,7 @@
       <hr/>
 
       <h3>Milestones</h3>
-      <form method="post" action="${pageContext.request.contextPath}/academic/recovery_plan">
+      <form method="post" action="${planActionUrl}">
         <input type="hidden" name="action" value="addMilestone"/>
         <input type="hidden" name="enrolment_id" value="${enrolmentId}"/>
         <input name="title" placeholder="Milestone title" required/>
@@ -62,7 +62,7 @@
             <td><c:out value="${m.status}"/></td>
             <td><c:out value="${m.remarks}"/></td>
             <td>
-              <form method="post" action="${pageContext.request.contextPath}/academic/recovery_plan" style="display:inline;">
+              <form method="post" action="${planActionUrl}" style="display:inline;">
                 <input type="hidden" name="action" value="updateMilestone"/>
                 <input type="hidden" name="enrolment_id" value="${enrolmentId}"/>
                 <input type="hidden" name="milestone_id" value="${m.milestoneId}"/>

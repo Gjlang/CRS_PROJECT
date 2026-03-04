@@ -12,7 +12,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 
-@WebServlet("/academic/recovery_plan")
+@WebServlet(urlPatterns = {"/academic/recovery_plan", "/admin/recovery_plan"})
 public class RecoveryPlanServlet extends HttpServlet {
 
     @EJB
@@ -41,6 +41,10 @@ public class RecoveryPlanServlet extends HttpServlet {
             req.setAttribute("enrolmentId", enrolmentId);
             req.setAttribute("plan", plan);
             req.setAttribute("milestones", milestones);
+
+            // Change 1C — pass dynamic action URL so JSP posts back to the correct path
+            req.setAttribute("planActionUrl", req.getContextPath() + req.getServletPath());
+
         } catch (NumberFormatException e) {
             resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid enrolment_id");
             return;
@@ -61,7 +65,8 @@ public class RecoveryPlanServlet extends HttpServlet {
         long userId = (long) req.getSession().getAttribute("userId");
 
         if (enrolmentIdStr == null || enrolmentIdStr.isBlank()) {
-            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing enrolment_id");
+            // send them to a page where they can select an enrolment
+            resp.sendRedirect(req.getContextPath() + "/academic/enrolments");
             return;
         }
 
@@ -73,17 +78,20 @@ public class RecoveryPlanServlet extends HttpServlet {
             return;
         }
 
+        // Change 1B — dynamic base path so admin stays on /admin, academic stays on /academic
+        String base = req.getContextPath() + req.getServletPath();
+
         try {
             if ("createPlan".equals(action)) {
                 String recommendation = req.getParameter("recommendation");
                 recoveryPlanEJB.createPlanForApprovedEnrolment(enrolmentId, recommendation, userId);
-                resp.sendRedirect(req.getContextPath() + "/academic/recovery_plan?enrolment_id=" + enrolmentId);
+                resp.sendRedirect(base + "?enrolment_id=" + enrolmentId);
                 return;
 
             } else if ("updatePlan".equals(action)) {
                 String recommendation = req.getParameter("recommendation");
                 recoveryPlanEJB.updateRecommendation(enrolmentId, recommendation);
-                resp.sendRedirect(req.getContextPath() + "/academic/recovery_plan?enrolment_id=" + enrolmentId);
+                resp.sendRedirect(base + "?enrolment_id=" + enrolmentId);
                 return;
 
             } else if ("addMilestone".equals(action)) {
@@ -92,7 +100,7 @@ public class RecoveryPlanServlet extends HttpServlet {
                 LocalDate dueDate = (due == null || due.isBlank()) ? null : LocalDate.parse(due);
                 String remarks = req.getParameter("remarks");
                 milestoneEJB.add(enrolmentId, title, dueDate, remarks);
-                resp.sendRedirect(req.getContextPath() + "/academic/recovery_plan?enrolment_id=" + enrolmentId);
+                resp.sendRedirect(base + "?enrolment_id=" + enrolmentId);
                 return;
 
             } else if ("updateMilestone".equals(action)) {
@@ -100,7 +108,7 @@ public class RecoveryPlanServlet extends HttpServlet {
                 String status = req.getParameter("status");
                 String remarks = req.getParameter("remarks");
                 milestoneEJB.updateStatus(milestoneId, status, remarks);
-                resp.sendRedirect(req.getContextPath() + "/academic/recovery_plan?enrolment_id=" + enrolmentId);
+                resp.sendRedirect(base + "?enrolment_id=" + enrolmentId);
                 return;
 
             } else {
