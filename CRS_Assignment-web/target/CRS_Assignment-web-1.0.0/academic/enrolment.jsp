@@ -2,6 +2,7 @@
 <%@ taglib uri="jakarta.tags.core" prefix="c" %>
 <%
   request.setAttribute("pageTitle", "Enrolment Request");
+  request.setAttribute("activePage", "academic_enrolments");
 %>
 <jsp:include page="/WEB-INF/views/common/_layout_start.jsp" />
 
@@ -38,9 +39,18 @@
         <td>${e.rejectReason}</td>
         <td>
           <c:if test="${e.enrolmentStatus == 'APPROVED'}">
-           <a href="${pageContext.request.contextPath}/academic/recovery_plan?enrolment_id=${e.enrolmentId}">
-			  Recovery Plan
-			</a>
+            <%-- Select this enrolment into session so sidebar links work --%>
+            <a href="${pageContext.request.contextPath}/academic/select_enrolment?enrolment_id=${e.enrolmentId}">
+              Select
+            </a>
+            &nbsp;|&nbsp;
+            <a href="${pageContext.request.contextPath}/academic/recovery_plan?enrolment_id=${e.enrolmentId}">
+              Recovery Plan
+            </a>
+            &nbsp;|&nbsp;
+            <a href="${pageContext.request.contextPath}/academic/milestones?enrolment_id=${e.enrolmentId}">
+              Milestones
+            </a>
           </c:if>
         </td>
       </tr>

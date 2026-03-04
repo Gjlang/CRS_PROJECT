@@ -44,6 +44,7 @@
         <input type="hidden" name="action" value="addMilestone"/>
         <input type="hidden" name="enrolment_id" value="${enrolmentId}"/>
         <input name="title" placeholder="Milestone title" required/>
+        <input name="task" placeholder="Task / Activity" required/>
         <input type="date" name="due_date"/>
         <input name="remarks" placeholder="Remarks"/>
         <button type="submit">Add</button>
@@ -53,11 +54,12 @@
 
       <table border="1" cellpadding="6">
         <tr>
-          <th>Title</th><th>Due</th><th>Status</th><th>Remarks</th><th>Action</th>
+          <th>Title</th><th>Task</th><th>Due</th><th>Status</th><th>Remarks</th><th>Action</th>
         </tr>
         <c:forEach var="m" items="${milestones}">
           <tr>
             <td><c:out value="${m.title}"/></td>
+            <td><c:out value="${m.task}"/></td>
             <td><c:out value="${m.dueDate}"/></td>
             <td><c:out value="${m.status}"/></td>
             <td><c:out value="${m.remarks}"/></td>

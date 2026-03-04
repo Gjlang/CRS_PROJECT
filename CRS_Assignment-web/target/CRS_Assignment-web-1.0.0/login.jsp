@@ -68,7 +68,7 @@
         </div>
 
         <button type="submit" class="btn btn-primary auth-btn">
-          Sign In to CRS →
+          Sign In to CRS JAWAA →
         </button>
 
       </form>

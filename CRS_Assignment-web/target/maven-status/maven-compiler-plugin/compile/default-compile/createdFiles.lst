@@ -12,5 +12,6 @@ com\crs\web\servlet\ResetPasswordServlet.class
 com\crs\web\servlet\NotificationHistoryServlet.class
 com\crs\web\filter\AuthFilter.class
 com\crs\web\servlet\LogoutServlet.class
+com\crs\web\servlet\SelectEnrolmentServlet.class
 com\crs\web\servlet\AdminUserServlet.class
 com\crs\web\servlet\ForgotPasswordServlet.class

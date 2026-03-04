@@ -28,8 +28,15 @@ public class RecoveryPlanServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String enrolmentIdStr = req.getParameter("enrolment_id");
 
+        // Fallback to session if not in URL (e.g. clicked from sidebar)
         if (enrolmentIdStr == null || enrolmentIdStr.isBlank()) {
-            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing enrolment_id");
+            Object selected = req.getSession().getAttribute("selectedEnrolmentId");
+            if (selected != null) enrolmentIdStr = String.valueOf(selected);
+        }
+
+        // Still nothing — send to enrolments to pick one
+        if (enrolmentIdStr == null || enrolmentIdStr.isBlank()) {
+            resp.sendRedirect(req.getContextPath() + "/academic/enrolments");
             return;
         }
 
@@ -41,9 +48,8 @@ public class RecoveryPlanServlet extends HttpServlet {
             req.setAttribute("enrolmentId", enrolmentId);
             req.setAttribute("plan", plan);
             req.setAttribute("milestones", milestones);
-
-            // Change 1C — pass dynamic action URL so JSP posts back to the correct path
             req.setAttribute("planActionUrl", req.getContextPath() + req.getServletPath());
+            req.setAttribute("activePage", "academic_recovery_plan");
 
         } catch (NumberFormatException e) {
             resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid enrolment_id");
@@ -64,8 +70,13 @@ public class RecoveryPlanServlet extends HttpServlet {
         String enrolmentIdStr = req.getParameter("enrolment_id");
         long userId = (long) req.getSession().getAttribute("userId");
 
+        // Fallback to session
         if (enrolmentIdStr == null || enrolmentIdStr.isBlank()) {
-            // send them to a page where they can select an enrolment
+            Object selected = req.getSession().getAttribute("selectedEnrolmentId");
+            if (selected != null) enrolmentIdStr = String.valueOf(selected);
+        }
+
+        if (enrolmentIdStr == null || enrolmentIdStr.isBlank()) {
             resp.sendRedirect(req.getContextPath() + "/academic/enrolments");
             return;
         }
@@ -78,7 +89,6 @@ public class RecoveryPlanServlet extends HttpServlet {
             return;
         }
 
-        // Change 1B — dynamic base path so admin stays on /admin, academic stays on /academic
         String base = req.getContextPath() + req.getServletPath();
 
         try {
@@ -96,12 +106,22 @@ public class RecoveryPlanServlet extends HttpServlet {
 
             } else if ("addMilestone".equals(action)) {
                 String title = req.getParameter("title");
+                String task  = req.getParameter("task"); // ✅ NEW
                 String due = req.getParameter("due_date"); // yyyy-MM-dd
                 LocalDate dueDate = (due == null || due.isBlank()) ? null : LocalDate.parse(due);
                 String remarks = req.getParameter("remarks");
-                milestoneEJB.add(enrolmentId, title, dueDate, remarks);
+
+                // optional safety
+                if (task == null || task.isBlank()) {
+                    throw new IllegalArgumentException("Task cannot be empty.");
+                }
+
+                // ✅ pass task into EJB
+                milestoneEJB.add(enrolmentId, title, task, dueDate, remarks);
+
                 resp.sendRedirect(base + "?enrolment_id=" + enrolmentId);
                 return;
+            
 
             } else if ("updateMilestone".equals(action)) {
                 long milestoneId = Long.parseLong(req.getParameter("milestone_id"));
@@ -122,7 +142,6 @@ public class RecoveryPlanServlet extends HttpServlet {
             req.setAttribute("error", "Failed: " + e.getMessage());
         }
 
-        // On error: reload plan page with error message
         doGet(req, resp);
     }
 }

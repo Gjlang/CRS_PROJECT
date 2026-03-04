@@ -7,7 +7,7 @@
 
 <jsp:include page="/WEB-INF/views/common/_layout_start.jsp" />
 
-<h1 class="pageTitle">Dashboard</h1>
+<h1 class="pageTitle">Dashboard JAWAA</h1>
 
 <!-- Success Message -->
 <c:if test="${not empty message}">
