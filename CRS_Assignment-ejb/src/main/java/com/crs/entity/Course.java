@@ -3,29 +3,45 @@ package com.crs.entity;
 import java.io.Serializable;
 
 public class Course implements Serializable {
-    private String courseCode;
-    private String courseTitle;
-    private int creditHours;
+    private String courseId;
+    private String courseName;
+    private int credits;
+    private String semester;
+    private String instructor;
+    private Integer capacity;
 
     public Course() {}
 
-    public Course(String courseCode, String courseTitle, int creditHours) {
-        this.courseCode = courseCode;
-        this.courseTitle = courseTitle;
-        this.creditHours = creditHours;
+    public Course(String courseId, String courseName, int credits, String semester, String instructor, Integer capacity) {
+        this.courseId = courseId;
+        this.courseName = courseName;
+        this.credits = credits;
+        this.semester = semester;
+        this.instructor = instructor;
+        this.capacity = capacity;
     }
 
-    public String getCourseCode() { return courseCode; }
-    public void setCourseCode(String courseCode) { this.courseCode = courseCode; }
+    public String getCourseId() { return courseId; }
+    public void setCourseId(String courseId) { this.courseId = courseId; }
 
-    public String getCourseTitle() { return courseTitle; }
-    public void setCourseTitle(String courseTitle) { this.courseTitle = courseTitle; }
+    public String getCourseName() { return courseName; }
+    public void setCourseName(String courseName) { this.courseName = courseName; }
 
-    public int getCreditHours() { return creditHours; }
-    public void setCreditHours(int creditHours) { this.creditHours = creditHours; }
+    public int getCredits() { return credits; }
+    public void setCredits(int credits) { this.credits = credits; }
 
-    @Override public String toString() {
-        return "Course{courseCode='" + courseCode + "', courseTitle='" + courseTitle + "', creditHours=" + creditHours + "}";
+    public String getSemester() { return semester; }
+    public void setSemester(String semester) { this.semester = semester; }
+
+    public String getInstructor() { return instructor; }
+    public void setInstructor(String instructor) { this.instructor = instructor; }
+
+    public Integer getCapacity() { return capacity; }
+    public void setCapacity(Integer capacity) { this.capacity = capacity; }
+
+    @Override
+    public String toString() {
+        return "Course{courseId='" + courseId + "', courseName='" + courseName + "', credits=" + credits +
+               ", semester='" + semester + "', instructor='" + instructor + "', capacity=" + capacity + "}";
     }
 }
-

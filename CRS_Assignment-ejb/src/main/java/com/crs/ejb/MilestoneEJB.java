@@ -1,5 +1,4 @@
 package com.crs.ejb;
-
 import com.crs.dao.MilestoneDAO;
 import com.crs.dao.RecoveryPlanDAO;
 import com.crs.entity.Milestone;
@@ -11,7 +10,6 @@ import java.util.List;
 
 @Stateless
 public class MilestoneEJB {
-
     private final RecoveryPlanDAO planDAO = new RecoveryPlanDAO();
     private final MilestoneDAO milestoneDAO = new MilestoneDAO();
 
@@ -34,13 +32,13 @@ public class MilestoneEJB {
         m.setTitle(title.trim());
         m.setTask(task.trim());
         m.setDueDate(dueDate);
-        m.setStatus("PENDING");
+        m.setStatus("TODO");       
         m.setRemarks(remarks);
         milestoneDAO.insert(m);
     }
 
     public void updateStatus(long milestoneId, String status, String remarks) throws SQLException {
-        if (status == null || status.isBlank()) status = "PENDING";
+        if (status == null || status.isBlank()) status = "TODO";  // ✏️ was: "PENDING"
         milestoneDAO.updateStatus(milestoneId, status.trim(), remarks);
     }
 }

@@ -18,7 +18,6 @@ public class EnrolmentDAO {
         }
     }
 
-    // 3.1 — updated to save created_by_user_id
     public long createPending(Enrolment e) throws SQLException {
         String sql = "INSERT INTO enrolments(student_id, course_code, attempt_no, eligibility_status, enrolment_status, created_by_user_id, created_at) " +
                      "VALUES(?,?,?,?,?,?,NOW())";
@@ -38,7 +37,6 @@ public class EnrolmentDAO {
         return -1;
     }
 
-    // Original listPending() — kept for academic officer use
     public List<Enrolment> listPending() throws SQLException {
         String sql = "SELECT enrolment_id, student_id, course_code, attempt_no, eligibility_status, enrolment_status, " +
                      "created_by_user_id, decided_by_user_id, decided_at, reject_reason, created_at " +
@@ -52,7 +50,6 @@ public class EnrolmentDAO {
         return list;
     }
 
-    // 3.2 — list pending for admin (separate method)
     public List<Enrolment> listPendingForAdmin() throws SQLException {
         String sql = "SELECT enrolment_id, student_id, course_code, attempt_no, eligibility_status, enrolment_status, " +
                      "created_by_user_id, decided_by_user_id, decided_at, reject_reason, created_at " +
@@ -66,14 +63,14 @@ public class EnrolmentDAO {
         return list;
     }
 
-    // NEW — list pending with course title (JOIN to courses table)
+    // ✏️ CHANGED: course_title → c.CourseName AS course_name, JOIN key course_code → CourseID
     public List<Enrolment> listPendingWithCourseTitle() throws SQLException {
         String sql =
-            "SELECT e.enrolment_id, e.student_id, e.course_code, c.course_title, e.attempt_no, " +
+            "SELECT e.enrolment_id, e.student_id, e.course_code, c.CourseName AS course_name, e.attempt_no, " +
             "e.eligibility_status, e.enrolment_status, e.created_by_user_id, e.decided_by_user_id, " +
             "e.decided_at, e.reject_reason, e.created_at " +
             "FROM enrolments e " +
-            "JOIN courses c ON c.course_code = e.course_code " +
+            "JOIN courses c ON c.CourseID = e.course_code " +
             "WHERE e.enrolment_status = 'PENDING' " +
             "ORDER BY e.created_at DESC";
 
@@ -83,14 +80,13 @@ public class EnrolmentDAO {
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 Enrolment e = map(rs);
-                e.setCourseTitle(rs.getString("course_title"));
+                e.setCourseTitle(rs.getString("course_name"));
                 list.add(e);
             }
         }
         return list;
     }
 
-    // 3.3 — list by creator ("My Requests")
     public List<Enrolment> listByCreator(long createdByUserId) throws SQLException {
         String sql = "SELECT enrolment_id, student_id, course_code, attempt_no, eligibility_status, enrolment_status, " +
                      "created_by_user_id, decided_by_user_id, decided_at, reject_reason, created_at " +
@@ -106,7 +102,6 @@ public class EnrolmentDAO {
         return list;
     }
 
-    // 3.4 — atomic approve (returns 1 = success, 0 = already decided / not found)
     public int approvePending(long enrolmentId, long adminUserId) throws SQLException {
         String sql = "UPDATE enrolments SET enrolment_status='APPROVED', decided_by_user_id=?, decided_at=NOW(), " +
                      "reject_reason=NULL " +
@@ -119,7 +114,6 @@ public class EnrolmentDAO {
         }
     }
 
-    // 3.4 — atomic reject with reason (returns 1 = success, 0 = already decided / not found)
     public int rejectPending(long enrolmentId, long adminUserId, String reason) throws SQLException {
         String sql = "UPDATE enrolments SET enrolment_status='REJECTED', decided_by_user_id=?, decided_at=NOW(), " +
                      "reject_reason=? " +
@@ -133,7 +127,6 @@ public class EnrolmentDAO {
         }
     }
 
-    // NEW — find any enrolment by ID regardless of status (used by EJB for status checks)
     public Enrolment findById(long enrolmentId) throws SQLException {
         String sql = "SELECT enrolment_id, student_id, course_code, attempt_no, eligibility_status, enrolment_status, " +
                      "created_by_user_id, decided_by_user_id, decided_at, reject_reason, created_at " +
@@ -165,13 +158,11 @@ public class EnrolmentDAO {
         approvePending(enrolmentId, 0L);
     }
 
-    /** @deprecated Use rejectPending(enrolmentId, adminUserId, reason) instead */
     @Deprecated
     public void reject(long enrolmentId) throws SQLException {
         rejectPending(enrolmentId, 0L, null);
     }
 
-    // 3.5 — updated map() to include new fields
     private Enrolment map(ResultSet rs) throws SQLException {
         Timestamp ts = rs.getTimestamp("created_at");
         LocalDateTime created = (ts == null) ? null : ts.toLocalDateTime();

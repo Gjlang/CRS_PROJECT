@@ -34,6 +34,7 @@ public class AcademicEligibilityServlet extends HttpServlet {
             EligibilityResult result = eligibilityEJB.checkStudent(studentId.trim());
             req.setAttribute("result", result);
             req.setAttribute("studentId", studentId.trim()); // 2.1 — pass studentId to JSP
+            req.setAttribute("activePage", "academic_eligibility");
             req.getRequestDispatcher("/academic/eligibility.jsp").forward(req, resp);
         } catch (Exception e) {
             req.setAttribute("error", e.getMessage());

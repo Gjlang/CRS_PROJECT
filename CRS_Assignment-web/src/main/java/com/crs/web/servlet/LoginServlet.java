@@ -6,6 +6,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import java.io.IOException;
+
 @WebServlet("/login")
 public class LoginServlet extends HttpServlet {
     @EJB
@@ -13,7 +14,7 @@ public class LoginServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-    	System.out.println(">>> HIT LoginServlet.doGet /login");
+        System.out.println(">>> HIT LoginServlet.doGet /login");
         req.getRequestDispatcher("/login.jsp").forward(req, resp);
     }
 
@@ -32,7 +33,17 @@ public class LoginServlet extends HttpServlet {
             session.setAttribute("userId", u.getUserId());
             session.setAttribute("role", u.getRole());
             session.setAttribute("name", u.getFullName());
-            resp.sendRedirect(req.getContextPath() + "/dashboard.jsp");
+
+            if ("COURSE_ADMIN".equals(u.getRole())) {
+                resp.sendRedirect(req.getContextPath() + "/admin/dashboard");
+            } else if ("ACADEMIC_OFFICER".equals(u.getRole())) {
+                resp.sendRedirect(req.getContextPath() + "/academic/dashboard");
+            } else {
+                session.invalidate();
+                req.setAttribute("error", "Unknown role.");
+                req.getRequestDispatcher("/login.jsp").forward(req, resp);
+            }
+
         } catch (Exception e) {
             req.setAttribute("error", "Login failed: " + e.getMessage());
             req.getRequestDispatcher("/login.jsp").forward(req, resp);

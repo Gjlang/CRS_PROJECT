@@ -8,11 +8,15 @@ import java.util.List;
 
 public class CourseDAO {
 
-    public Course findByCode(String courseCode) throws SQLException {
-        String sql = "SELECT course_code, course_title, credit_hours FROM courses WHERE course_code=?";
+    public Course findByCode(String courseId) throws SQLException {
+        String sql = """
+            SELECT CourseID, CourseName, Credits, Semester, Instructor, Capacity
+            FROM courses
+            WHERE CourseID=?
+            """;
         try (Connection con = DbUtil.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, courseCode);
+            ps.setString(1, courseId);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() ? map(rs) : null;
             }
@@ -20,7 +24,11 @@ public class CourseDAO {
     }
 
     public List<Course> findAll() throws SQLException {
-        String sql = "SELECT course_code, course_title, credit_hours FROM courses ORDER BY course_code";
+        String sql = """
+            SELECT CourseID, CourseName, Credits, Semester, Instructor, Capacity
+            FROM courses
+            ORDER BY CourseID
+            """;
         List<Course> list = new ArrayList<>();
         try (Connection con = DbUtil.getConnection();
              PreparedStatement ps = con.prepareStatement(sql);
@@ -31,33 +39,48 @@ public class CourseDAO {
     }
 
     public void create(Course c) throws SQLException {
-        String sql = "INSERT INTO courses(course_code, course_title, credit_hours) VALUES(?,?,?)";
+        String sql = """
+            INSERT INTO courses(CourseID, CourseName, Credits, Semester, Instructor, Capacity)
+            VALUES(?,?,?,?,?,?)
+            """;
         try (Connection con = DbUtil.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, c.getCourseCode());
-            ps.setString(2, c.getCourseTitle());
-            ps.setInt(3, c.getCreditHours());
+            ps.setString(1, c.getCourseId());
+            ps.setString(2, c.getCourseName());
+            ps.setInt(3, c.getCredits());
+            ps.setString(4, c.getSemester());
+            ps.setString(5, c.getInstructor());
+            ps.setObject(6, c.getCapacity());
             ps.executeUpdate();
         }
     }
 
     public void update(Course c) throws SQLException {
-        String sql = "UPDATE courses SET course_title=?, credit_hours=? WHERE course_code=?";
+        String sql = """
+            UPDATE courses
+            SET CourseName=?, Credits=?, Semester=?, Instructor=?, Capacity=?
+            WHERE CourseID=?
+            """;
         try (Connection con = DbUtil.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, c.getCourseTitle());
-            ps.setInt(2, c.getCreditHours());
-            ps.setString(3, c.getCourseCode());
+            ps.setString(1, c.getCourseName());
+            ps.setInt(2, c.getCredits());
+            ps.setString(3, c.getSemester());
+            ps.setString(4, c.getInstructor());
+            ps.setObject(5, c.getCapacity());
+            ps.setString(6, c.getCourseId());
             ps.executeUpdate();
         }
     }
 
     private Course map(ResultSet rs) throws SQLException {
         return new Course(
-                rs.getString("course_code"),
-                rs.getString("course_title"),
-                rs.getInt("credit_hours")
+                rs.getString("CourseID"),
+                rs.getString("CourseName"),
+                rs.getInt("Credits"),
+                rs.getString("Semester"),
+                rs.getString("Instructor"),
+                (Integer) rs.getObject("Capacity")
         );
     }
 }
-

@@ -53,12 +53,21 @@
         Enrolments
       </a>
 
-      
+      <a href="<%= request.getContextPath() %>/academic/recovery_plan"
+         class="<%= "academic_recovery_plan".equals(active) ? "active" : "" %>">
+        Recovery Plan
+      </a><%-- ✏️ added --%>
+
+      <a href="<%= request.getContextPath() %>/academic/milestones"
+         class="<%= "academic_milestones".equals(active) ? "active" : "" %>">
+        Milestones
+      </a><%-- ✏️ added --%>
 
       <a href="<%= request.getContextPath() %>/academic/report"
-         class="<%= "academic_report".equals(active) ? "active" : "" %>">
+         class="<%= "report".equals(active) ? "active" : "" %>">
         Performance Report
       </a>
+
     <% } else { %>
       <div class="muted" style="padding:10px 8px;">
         No role detected. Please login again.

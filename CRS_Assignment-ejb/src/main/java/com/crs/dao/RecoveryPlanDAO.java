@@ -13,9 +13,9 @@ public class RecoveryPlanDAO {
      * Returns null if not found.
      */
     public RecoveryPlan findByEnrolmentId(long enrolmentId) throws SQLException {
-        String sql = "SELECT plan_id, student_id, course_code, attempt_no, recommendation, " +
-                     "created_by_user_id, created_at, enrolment_id " +
-                     "FROM recovery_plans WHERE enrolment_id = ?";
+        String sql = "SELECT plan_id, recommendation, created_by_user_id, created_at, enrolment_id\n"
+        		+ "FROM recovery_plans\n"
+        		+ "WHERE enrolment_id = ?";
         try (Connection con = DbUtil.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setLong(1, enrolmentId);
@@ -30,8 +30,8 @@ public class RecoveryPlanDAO {
      * Throws IllegalStateException if UNIQUE(enrolment_id) is violated (one plan per enrolment).
      */
     public long insert(RecoveryPlan p) throws SQLException {
-        String sql = "INSERT INTO recovery_plans (student_id, course_code, attempt_no, recommendation, " +
-                     "created_by_user_id, enrolment_id, created_at) VALUES (?,?,?,?,?,?,NOW())";
+        String sql = "INSERT INTO recovery_plans (recommendation, created_by_user_id, enrolment_id, created_at)\n"
+        		+ "VALUES (?,?,?,NOW())";
         try (Connection con = DbUtil.getConnection();
              PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, p.getStudentId());

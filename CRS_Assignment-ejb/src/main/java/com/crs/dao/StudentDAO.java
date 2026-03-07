@@ -9,7 +9,11 @@ import java.util.List;
 public class StudentDAO {
 
     public Student findById(String studentId) throws SQLException {
-        String sql = "SELECT student_id, student_name, program, year_of_study, active FROM students WHERE student_id=?";
+        String sql = """
+            SELECT StudentID, FirstName, LastName, Major, Year, Email, active
+            FROM students
+            WHERE StudentID=?
+            """;
         try (Connection con = DbUtil.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, studentId);
@@ -20,7 +24,12 @@ public class StudentDAO {
     }
 
     public List<Student> findAllActive() throws SQLException {
-        String sql = "SELECT student_id, student_name, program, year_of_study, active FROM students WHERE active=1 ORDER BY student_id";
+        String sql = """
+            SELECT StudentID, FirstName, LastName, Major, Year, Email, active
+            FROM students
+            WHERE active=1
+            ORDER BY StudentID
+            """;
         List<Student> list = new ArrayList<>();
         try (Connection con = DbUtil.getConnection();
              PreparedStatement ps = con.prepareStatement(sql);
@@ -31,7 +40,6 @@ public class StudentDAO {
     }
 
     public int countFailedCourses(String studentId) throws SQLException {
-        // Count distinct courses where the latest attempt has at least one failed component.
         String sql = """
             SELECT COUNT(*) AS total_failed FROM (
               SELECT latest.course_code AS course_code
@@ -49,7 +57,6 @@ public class StudentDAO {
               HAVING SUM(CASE WHEN r.failed=1 THEN 1 ELSE 0 END) > 0
             ) x
             """;
-
         try (Connection con = DbUtil.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, studentId);
@@ -66,13 +73,13 @@ public class StudentDAO {
               SUM(course_gp * credit_hours) / NULLIF(SUM(credit_hours),0) AS cgpa
             FROM (
               SELECT r.course_code,
-                     c.credit_hours,
+                     c.Credits AS credit_hours,
                      SUM(r.grade_point * (a.weight_percent/100.0)) AS course_gp
               FROM student_results r
               JOIN assessments a ON a.assessment_id = r.assessment_id
-              JOIN courses c ON c.course_code = r.course_code
+              JOIN courses c ON c.CourseID = r.course_code
               WHERE r.student_id=?
-              GROUP BY r.course_code, c.credit_hours, r.attempt_no, r.year, r.semester
+              GROUP BY r.course_code, c.Credits, r.attempt_no, r.year, r.semester
             ) course_sem
             """;
         try (Connection con = DbUtil.getConnection();
@@ -91,13 +98,13 @@ public class StudentDAO {
               SUM(course_gp * credit_hours) / NULLIF(SUM(credit_hours),0) AS cgpa
             FROM (
               SELECT r.course_code,
-                     c.credit_hours,
+                     c.Credits AS credit_hours,
                      SUM(r.grade_point * (a.weight_percent/100.0)) AS course_gp
               FROM student_results r
               JOIN assessments a ON a.assessment_id = r.assessment_id
-              JOIN courses c ON c.course_code = r.course_code
+              JOIN courses c ON c.CourseID = r.course_code
               WHERE r.student_id=? AND r.semester=? AND r.year=? AND r.year_of_study=?
-              GROUP BY r.course_code, c.credit_hours
+              GROUP BY r.course_code, c.Credits
             ) course_level
             """;
         try (Connection con = DbUtil.getConnection();
@@ -114,33 +121,44 @@ public class StudentDAO {
     }
 
     public void create(Student s) throws SQLException {
-        String sql = "INSERT INTO students(student_id, student_name, program, year_of_study, active) VALUES(?,?,?,?,?)";
+        String sql = """
+            INSERT INTO students(StudentID, FirstName, LastName, Major, Year, Email, active)
+            VALUES(?,?,?,?,?,?,?)
+            """;
         try (Connection con = DbUtil.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, s.getStudentId());
-            ps.setString(2, s.getStudentName());
-            ps.setString(3, s.getProgram());
-            ps.setInt(4, s.getYearOfStudy());
-            ps.setBoolean(5, s.isActive());
+            ps.setString(2, s.getFirstName());
+            ps.setString(3, s.getLastName());
+            ps.setString(4, s.getMajor());
+            ps.setInt(5, s.getYear());
+            ps.setString(6, s.getEmail());
+            ps.setBoolean(7, s.isActive());
             ps.executeUpdate();
         }
     }
 
     public void update(Student s) throws SQLException {
-        String sql = "UPDATE students SET student_name=?, program=?, year_of_study=?, active=? WHERE student_id=?";
+        String sql = """
+            UPDATE students
+            SET FirstName=?, LastName=?, Major=?, Year=?, Email=?, active=?
+            WHERE StudentID=?
+            """;
         try (Connection con = DbUtil.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, s.getStudentName());
-            ps.setString(2, s.getProgram());
-            ps.setInt(3, s.getYearOfStudy());
-            ps.setBoolean(4, s.isActive());
-            ps.setString(5, s.getStudentId());
+            ps.setString(1, s.getFirstName());
+            ps.setString(2, s.getLastName());
+            ps.setString(3, s.getMajor());
+            ps.setInt(4, s.getYear());
+            ps.setString(5, s.getEmail());
+            ps.setBoolean(6, s.isActive());
+            ps.setString(7, s.getStudentId());
             ps.executeUpdate();
         }
     }
 
     public void deactivate(String studentId) throws SQLException {
-        String sql = "UPDATE students SET active=0 WHERE student_id=?";
+        String sql = "UPDATE students SET active=0 WHERE StudentID=?";
         try (Connection con = DbUtil.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, studentId);
@@ -150,12 +168,13 @@ public class StudentDAO {
 
     private Student map(ResultSet rs) throws SQLException {
         return new Student(
-                rs.getString("student_id"),
-                rs.getString("student_name"),
-                rs.getString("program"),
-                rs.getInt("year_of_study"),
+                rs.getString("StudentID"),
+                rs.getString("FirstName"),
+                rs.getString("LastName"),
+                rs.getString("Major"),
+                rs.getInt("Year"),
+                rs.getString("Email"),
                 rs.getBoolean("active")
         );
     }
 }
-

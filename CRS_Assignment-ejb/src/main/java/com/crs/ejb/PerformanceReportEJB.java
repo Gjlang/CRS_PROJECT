@@ -1,5 +1,4 @@
 package com.crs.ejb;
-
 import com.crs.dao.CourseDAO;
 import com.crs.dao.StudentDAO;
 import com.crs.dao.StudentResultDAO;
@@ -14,7 +13,6 @@ import java.util.*;
 
 @Stateless
 public class PerformanceReportEJB {
-
     public ReportData generateReport(String studentId, int semester, int year, int yearOfStudy) throws SQLException {
         if (studentId == null || studentId.isBlank()) throw new IllegalArgumentException("studentId required");
         studentId = studentId.trim();
@@ -26,7 +24,6 @@ public class PerformanceReportEJB {
         StudentResultDAO resultDAO = new StudentResultDAO();
         List<StudentResult> results = resultDAO.reportBySemesterYear(studentId, semester, year, yearOfStudy);
 
-        // Aggregate per course (weighted grade points + display grade is simplified: show last component grade)
         Map<String, List<StudentResult>> byCourse = new LinkedHashMap<>();
         for (StudentResult r : results) {
             byCourse.computeIfAbsent(r.getCourseCode(), k -> new ArrayList<>()).add(r);
@@ -36,10 +33,8 @@ public class PerformanceReportEJB {
         List<ReportCourseRow> rows = new ArrayList<>();
         for (String courseCode : byCourse.keySet()) {
             Course c = courseDAO.findByCode(courseCode);
-            String title = (c != null) ? c.getCourseTitle() : courseCode;
-            int credits = (c != null) ? c.getCreditHours() : 0;
-
-            // For UI simplicity, show the grade/GP of the last row; CGPA is computed in StudentDAO.
+            String title = (c != null) ? c.getCourseName() : courseCode;   
+            int credits = (c != null) ? c.getCredits() : 0;                
             StudentResult last = byCourse.get(courseCode).get(byCourse.get(courseCode).size() - 1);
             rows.add(new ReportCourseRow(courseCode, title, credits, last.getGrade(), last.getGradePoint()));
         }
@@ -48,14 +43,13 @@ public class PerformanceReportEJB {
 
         ReportData rd = new ReportData();
         rd.setStudentId(studentId);
-        rd.setStudentName(s.getStudentName());
-        rd.setProgram(s.getProgram());
+        rd.setStudentName(s.getFullName());
+        rd.setMajor(s.getMajor());
+        rd.setStudentYear(s.getYear());
         rd.setSemester(semester);
         rd.setYear(year);
-        rd.setYearOfStudy(yearOfStudy);
         rd.setRows(rows);
         rd.setCgpa(cgpa);
         return rd;
     }
 }
-

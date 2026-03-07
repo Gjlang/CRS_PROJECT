@@ -1,5 +1,4 @@
 package com.crs.web.servlet;
-
 import com.crs.ejb.NotificationEJB;
 import jakarta.ejb.EJB;
 import jakarta.servlet.ServletException;
@@ -9,7 +8,6 @@ import java.io.IOException;
 
 @WebServlet("/admin/notification_history")
 public class NotificationHistoryServlet extends HttpServlet {
-
     @EJB
     private NotificationEJB notificationEJB;
 
@@ -20,7 +18,7 @@ public class NotificationHistoryServlet extends HttpServlet {
         } catch (Exception e) {
             req.setAttribute("error", "Failed to load history: " + e.getMessage());
         }
+        req.setAttribute("activePage", "admin_notifications"); 
         req.getRequestDispatcher("/admin/notification_history.jsp").forward(req, resp);
     }
 }
-

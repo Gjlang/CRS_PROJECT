@@ -14,6 +14,11 @@ public class ResetPasswordServlet extends HttpServlet {
     private UserManagementEJB userManagementEJB;
 
     @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        req.getRequestDispatcher("/reset_password.jsp").forward(req, resp);
+    }
+
+    @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String token = req.getParameter("token");
         String newPassword = req.getParameter("new_password");
@@ -47,4 +52,3 @@ public class ResetPasswordServlet extends HttpServlet {
         }
     }
 }
-

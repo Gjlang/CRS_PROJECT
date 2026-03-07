@@ -33,17 +33,17 @@
 
   <c:if test="${not empty report}">
     <h3>Academic Performance Report</h3>
-    <p><b>${report.studentName}</b> (${report.studentId}) | Program: ${report.program}</p>
-    <p>Semester ${report.semester}, Year ${report.year}, Year of Study ${report.yearOfStudy}</p>
+    <p><b>${report.studentName}</b> (${report.studentId}) | Major: ${report.major}</p><%-- ✏️ Program → Major, report.program → report.major --%>
+    <p>Semester ${report.semester}, Year ${report.year}, Student Year ${report.studentYear}</p><%-- ✏️ Year of Study → Student Year, report.yearOfStudy → report.studentYear --%>
     <table border="1" cellpadding="6" cellspacing="0">
       <tr>
-        <th>Course Code</th><th>Course Title</th><th>Credit Hours</th><th>Grade</th><th>Grade Point</th>
+        <th>Course Code</th><th>Course Name</th><th>Credits</th><th>Grade</th><th>Grade Point</th><%-- ✏️ Course Title → Course Name, Credit Hours → Credits --%>
       </tr>
       <c:forEach items="${report.rows}" var="r">
         <tr>
           <td>${r.courseCode}</td>
-          <td>${r.courseTitle}</td>
-          <td>${r.creditHours}</td>
+          <td>${r.courseName}</td><%-- ✏️ r.courseTitle → r.courseName --%>
+          <td>${r.credits}</td><%-- ✏️ r.creditHours → r.credits --%>
           <td>${r.grade}</td>
           <td>${r.gradePoint}</td>
         </tr>
