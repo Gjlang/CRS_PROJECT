@@ -22,6 +22,11 @@
         Users Management
       </a>
 
+      <a href="<%= request.getContextPath() %>/admin/students"
+         class="<%= "admin_students".equals(active) ? "active" : "" %>">
+        Student Profiles
+      </a><%-- ✏️ added --%>
+
       <a href="<%= request.getContextPath() %>/admin/enrolments"
          class="<%= "admin_enrolments".equals(active) ? "active" : "" %>">
         Enrolment Approvals
@@ -56,12 +61,12 @@
       <a href="<%= request.getContextPath() %>/academic/recovery_plan"
          class="<%= "academic_recovery_plan".equals(active) ? "active" : "" %>">
         Recovery Plan
-      </a><%-- ✏️ added --%>
+      </a>
 
       <a href="<%= request.getContextPath() %>/academic/milestones"
          class="<%= "academic_milestones".equals(active) ? "active" : "" %>">
         Milestones
-      </a><%-- ✏️ added --%>
+      </a>
 
       <a href="<%= request.getContextPath() %>/academic/report"
          class="<%= "report".equals(active) ? "active" : "" %>">

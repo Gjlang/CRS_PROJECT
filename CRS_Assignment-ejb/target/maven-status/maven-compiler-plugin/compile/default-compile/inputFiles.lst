@@ -1,3 +1,4 @@
+C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-ejb\src\main\java\com\crs\dao\AdminStudentProfileDAO.java
 C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-ejb\src\main\java\com\crs\dao\AssessmentDAO.java
 C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-ejb\src\main\java\com\crs\dao\CourseDAO.java
 C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-ejb\src\main\java\com\crs\dao\EnrolmentDAO.java
@@ -8,7 +9,14 @@ C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-ejb\src\main\java\c
 C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-ejb\src\main\java\com\crs\dao\StudentDAO.java
 C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-ejb\src\main\java\com\crs\dao\StudentResultDAO.java
 C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-ejb\src\main\java\com\crs\dao\UserDAO.java
+C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-ejb\src\main\java\com\crs\ejb\AdminStudentProfileEJB.java
 C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-ejb\src\main\java\com\crs\ejb\AuthServiceEJB.java
+C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-ejb\src\main\java\com\crs\ejb\dto\AdminStudentEnrolmentRow.java
+C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-ejb\src\main\java\com\crs\ejb\dto\AdminStudentListRow.java
+C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-ejb\src\main\java\com\crs\ejb\dto\AdminStudentMilestoneRow.java
+C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-ejb\src\main\java\com\crs\ejb\dto\AdminStudentProfileData.java
+C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-ejb\src\main\java\com\crs\ejb\dto\AdminStudentRecoveryPlanRow.java
+C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-ejb\src\main\java\com\crs\ejb\dto\AdminStudentResultRow.java
 C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-ejb\src\main\java\com\crs\ejb\dto\EligibilityResult.java
 C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-ejb\src\main\java\com\crs\ejb\dto\RecoverySummaryRow.java
 C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-ejb\src\main\java\com\crs\ejb\dto\ReportCourseRow.java
