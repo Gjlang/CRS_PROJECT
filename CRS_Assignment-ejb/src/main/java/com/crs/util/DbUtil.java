@@ -8,29 +8,38 @@ import java.sql.SQLException;
 
 public class DbUtil {
 
-    // Optional fallback (only if you want). You can remove fallback if you rely on Payara resources only.
-    private static final String FALLBACK_URL  = System.getProperty("crs.db.url", "jdbc:mysql://localhost:3306/crs_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC");
+    private static final String FALLBACK_URL  = System.getProperty(
+            "crs.db.url",
+            "jdbc:mysql://localhost:3306/crs_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+    );
     private static final String FALLBACK_USER = System.getProperty("crs.db.user", "root");
     private static final String FALLBACK_PASS = System.getProperty("crs.db.pass", "");
 
     public static Connection getConnection() throws SQLException {
-        // ✅ Payara standard JNDI resource name
         String[] jndiCandidates = {
-                "jdbc/crsDB",                 // Payara JDBC Resource
-                "java:comp/env/jdbc/crsDB"     // if mapped via web.xml resource-ref
+                "jdbc/crsDB",
+                "java:comp/env/jdbc/crsDB"
         };
 
         for (String jndi : jndiCandidates) {
             try {
                 InitialContext ctx = new InitialContext();
                 DataSource ds = (DataSource) ctx.lookup(jndi);
-                if (ds != null) return ds.getConnection();
+                if (ds != null) {
+                    Connection con = ds.getConnection();
+                    System.out.println("[DbUtil] Using JNDI datasource: " + jndi);
+                    System.out.println("[DbUtil] URL = " + con.getMetaData().getURL());
+                    System.out.println("[DbUtil] USER = " + con.getMetaData().getUserName());
+                    return con;
+                }
             } catch (Exception ignored) {
-                // try next
             }
         }
 
-        // Fallback
-        return DriverManager.getConnection(FALLBACK_URL, FALLBACK_USER, FALLBACK_PASS);
+        Connection con = DriverManager.getConnection(FALLBACK_URL, FALLBACK_USER, FALLBACK_PASS);
+        System.out.println("[DbUtil] Using FALLBACK JDBC");
+        System.out.println("[DbUtil] URL = " + con.getMetaData().getURL());
+        System.out.println("[DbUtil] USER = " + con.getMetaData().getUserName());
+        return con;
     }
 }

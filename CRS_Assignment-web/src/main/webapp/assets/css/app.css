@@ -406,3 +406,90 @@ input:focus, select:focus, textarea:focus{
   border-top: 1px solid var(--border);
   background: rgba(255,255,255,0.6);
 }
+
+.recovery-search .searchRow{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+
+.recovery-search input[type="text"]{
+  min-width: 360px;
+  flex: 1 1 360px;
+}
+
+.studentCards{
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+  margin-top:16px;
+}
+
+.studentCard{
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:16px;
+  background:#fff;
+}
+
+.studentCardHeader{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:12px;
+}
+
+.studentName{
+  font-size:18px;
+  font-weight:800;
+}
+
+.studentMeta{
+  color:var(--muted);
+  font-size:14px;
+  margin-top:4px;
+}
+
+.selectedInfo{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap:10px;
+  margin-bottom:18px;
+  padding:12px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:#f9fafb;
+}
+
+.milestoneForm{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap:10px;
+  align-items:end;
+  margin-bottom:20px;
+}
+
+.inlineForm{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+
+#selected-recovery{
+  margin-top: 24px;
+  border: 2px solid #cfe0ff;
+  scroll-margin-top: 24px;
+}
+
+.selectedInfo{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap:10px;
+  margin-bottom:18px;
+  padding:12px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:#f9fafb;
+}

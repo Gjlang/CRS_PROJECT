@@ -1,6 +1,7 @@
 package com.crs.dao;
 
 import com.crs.ejb.dto.AdminStudentResultRow;
+import com.crs.ejb.dto.RecoveryCandidateRow;
 import com.crs.entity.StudentResult;
 import com.crs.util.DbUtil;
 
@@ -26,7 +27,19 @@ public class StudentResultDAO {
     }
 
     public List<StudentResult> findFailedComponents(String studentId, String courseCode, int attemptNo) throws SQLException {
-        String sql = "SELECT * FROM student_results WHERE student_id=? AND course_code=? AND attempt_no=? AND failed=1 ORDER BY assessment_id";
+        String sql = """
+            SELECT *
+            FROM student_results
+            WHERE TRIM(UPPER(student_id)) = TRIM(UPPER(?))
+              AND TRIM(UPPER(course_code)) = TRIM(UPPER(?))
+              AND attempt_no = ?
+              AND (
+                    failed = 1
+                    OR TRIM(UPPER(COALESCE(grade, ''))) IN ('F', 'FAIL', 'FAILED')
+              )
+            ORDER BY assessment_id
+            """;
+
         List<StudentResult> list = new ArrayList<>();
         try (Connection con = DbUtil.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -126,36 +139,106 @@ public class StudentResultDAO {
         }
     }
 
-    // STEP 2: New method — returns all failed course attempts for a student,
-    // grouped by course and attempt, used to populate recovery plan candidates.
-    public List<com.crs.ejb.dto.RecoveryCandidateRow> findRecoveryCandidatesByStudent(String studentId) throws SQLException {
+    public List<RecoveryCandidateRow> findAllRecoveryCandidates() throws SQLException {
         String sql = """
             SELECT
                 r.student_id,
+                CONCAT(s.FirstName, ' ', s.LastName) AS student_name,
                 r.course_code,
                 c.CourseName,
                 r.attempt_no,
                 COUNT(*) AS failed_component_count
             FROM student_results r
+            JOIN students s
+                 ON TRIM(UPPER(s.StudentID)) = TRIM(UPPER(r.student_id))
             LEFT JOIN courses c
-                   ON c.CourseID = r.course_code
-            WHERE r.student_id = ?
-              AND r.failed = 1
-            GROUP BY r.student_id, r.course_code, c.CourseName, r.attempt_no
-            ORDER BY r.course_code, r.attempt_no
+                 ON TRIM(UPPER(c.CourseID)) = TRIM(UPPER(r.course_code))
+            WHERE (
+                  r.failed = 1
+                  OR TRIM(UPPER(COALESCE(r.grade, ''))) IN ('F', 'FAIL', 'FAILED')
+            )
+            GROUP BY
+                r.student_id,
+                s.FirstName,
+                s.LastName,
+                r.course_code,
+                c.CourseName,
+                r.attempt_no
+            ORDER BY r.student_id, r.course_code, r.attempt_no
             """;
 
-        List<com.crs.ejb.dto.RecoveryCandidateRow> list = new ArrayList<>();
+        List<RecoveryCandidateRow> list = new ArrayList<>();
+
+        try (Connection con = DbUtil.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                RecoveryCandidateRow row = new RecoveryCandidateRow();
+                row.setStudentId(rs.getString("student_id"));
+                row.setStudentName(rs.getString("student_name"));
+                row.setCourseCode(rs.getString("course_code"));
+                row.setCourseName(rs.getString("CourseName"));
+                row.setAttemptNo(rs.getInt("attempt_no"));
+                row.setFailedComponentCount(rs.getInt("failed_component_count"));
+                list.add(row);
+            }
+        }
+
+        System.out.println("[StudentResultDAO] findAllRecoveryCandidates count = " + list.size());
+        return list;
+    }
+
+    public List<RecoveryCandidateRow> findRecoveryCandidatesByKeyword(String keyword) throws SQLException {
+        String sql = """
+            SELECT
+                r.student_id,
+                CONCAT(s.FirstName, ' ', s.LastName) AS student_name,
+                r.course_code,
+                c.CourseName,
+                r.attempt_no,
+                COUNT(*) AS failed_component_count
+            FROM student_results r
+            JOIN students s
+                 ON TRIM(UPPER(s.StudentID)) = TRIM(UPPER(r.student_id))
+            LEFT JOIN courses c
+                 ON TRIM(UPPER(c.CourseID)) = TRIM(UPPER(r.course_code))
+            WHERE (
+                  r.failed = 1
+                  OR TRIM(UPPER(COALESCE(r.grade, ''))) IN ('F', 'FAIL', 'FAILED')
+            )
+              AND (
+                    TRIM(UPPER(r.student_id)) LIKE TRIM(UPPER(?))
+                 OR TRIM(UPPER(CONCAT(s.FirstName, ' ', s.LastName))) LIKE TRIM(UPPER(?))
+                 OR TRIM(UPPER(r.course_code)) LIKE TRIM(UPPER(?))
+                 OR TRIM(UPPER(COALESCE(c.CourseName, ''))) LIKE TRIM(UPPER(?))
+              )
+            GROUP BY
+                r.student_id,
+                s.FirstName,
+                s.LastName,
+                r.course_code,
+                c.CourseName,
+                r.attempt_no
+            ORDER BY r.student_id, r.course_code, r.attempt_no
+            """;
+
+        List<RecoveryCandidateRow> list = new ArrayList<>();
+        String like = "%" + keyword + "%";
 
         try (Connection con = DbUtil.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
-            ps.setString(1, studentId);
+            ps.setString(1, like);
+            ps.setString(2, like);
+            ps.setString(3, like);
+            ps.setString(4, like);
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    com.crs.ejb.dto.RecoveryCandidateRow row = new com.crs.ejb.dto.RecoveryCandidateRow();
+                    RecoveryCandidateRow row = new RecoveryCandidateRow();
                     row.setStudentId(rs.getString("student_id"));
+                    row.setStudentName(rs.getString("student_name"));
                     row.setCourseCode(rs.getString("course_code"));
                     row.setCourseName(rs.getString("CourseName"));
                     row.setAttemptNo(rs.getInt("attempt_no"));
@@ -165,6 +248,7 @@ public class StudentResultDAO {
             }
         }
 
+        System.out.println("[StudentResultDAO] findRecoveryCandidatesByKeyword count = " + list.size());
         return list;
     }
 
