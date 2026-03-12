@@ -4,34 +4,59 @@ import java.io.Serializable;
 
 public class ReportCourseRow implements Serializable {
     private String courseCode;
-    private String courseTitle;
-    private int creditHours;
+    private String courseName;
+    private int credits;
     private String grade;
     private double gradePoint;
 
-    public ReportCourseRow() {}
+    public ReportCourseRow() {
+    }
 
-    public ReportCourseRow(String courseCode, String courseTitle, int creditHours, String grade, double gradePoint) {
+    public ReportCourseRow(String courseCode, String courseName, int credits, String grade, double gradePoint) {
         this.courseCode = courseCode;
-        this.courseTitle = courseTitle;
-        this.creditHours = creditHours;
+        this.courseName = courseName;
+        this.credits = credits;
         this.grade = grade;
         this.gradePoint = gradePoint;
     }
 
-    public String getCourseCode() { return courseCode; }
-    public void setCourseCode(String courseCode) { this.courseCode = courseCode; }
+    public String getCourseCode() {
+        return courseCode;
+    }
 
-    public String getCourseTitle() { return courseTitle; }
-    public void setCourseTitle(String courseTitle) { this.courseTitle = courseTitle; }
+    public void setCourseCode(String courseCode) {
+        this.courseCode = courseCode;
+    }
 
-    public int getCreditHours() { return creditHours; }
-    public void setCreditHours(int creditHours) { this.creditHours = creditHours; }
+    public String getCourseName() {
+        return courseName;
+    }
 
-    public String getGrade() { return grade; }
-    public void setGrade(String grade) { this.grade = grade; }
+    public void setCourseName(String courseName) {
+        this.courseName = courseName;
+    }
 
-    public double getGradePoint() { return gradePoint; }
-    public void setGradePoint(double gradePoint) { this.gradePoint = gradePoint; }
+    public int getCredits() {
+        return credits;
+    }
+
+    public void setCredits(int credits) {
+        this.credits = credits;
+    }
+
+    public String getGrade() {
+        return grade;
+    }
+
+    public void setGrade(String grade) {
+        this.grade = grade;
+    }
+
+    public double getGradePoint() {
+        return gradePoint;
+    }
+
+    public void setGradePoint(double gradePoint) {
+        this.gradePoint = gradePoint;
+    }
 }
-

@@ -209,29 +209,33 @@ public class AdminStudentProfileDAO {
         return list;
     }
 
+    // FIXED: no longer references rp.student_id, rp.course_code, rp.attempt_no
+    // — those columns don't exist in recovery_plans; we join through enrolments instead.
     private List<AdminStudentRecoveryPlanRow> findRecoveryPlans(String studentId) throws SQLException {
         String sql = """
             SELECT
                 rp.plan_id,
                 rp.enrolment_id,
-                rp.course_code,
+                e.course_code,
                 c.CourseName,
-                rp.attempt_no,
+                e.attempt_no,
                 rp.recommendation,
                 rp.created_at,
                 COUNT(m.milestone_id) AS milestone_count
             FROM recovery_plans rp
+            JOIN enrolments e
+                 ON e.enrolment_id = rp.enrolment_id
             LEFT JOIN courses c
-                   ON c.CourseID = rp.course_code
+                 ON c.CourseID = e.course_code
             LEFT JOIN milestones m
-                   ON m.plan_id = rp.plan_id
-            WHERE rp.student_id = ?
+                 ON m.plan_id = rp.plan_id
+            WHERE e.student_id = ?
             GROUP BY
                 rp.plan_id,
                 rp.enrolment_id,
-                rp.course_code,
+                e.course_code,
                 c.CourseName,
-                rp.attempt_no,
+                e.attempt_no,
                 rp.recommendation,
                 rp.created_at
             ORDER BY rp.created_at DESC, rp.plan_id DESC
@@ -268,12 +272,14 @@ public class AdminStudentProfileDAO {
         return list;
     }
 
+    // FIXED: joins through enrolments to get course_code and student_id filter
+    // instead of reading from recovery_plans directly (those columns no longer exist).
     private List<AdminStudentMilestoneRow> findMilestones(String studentId) throws SQLException {
         String sql = """
             SELECT
                 m.milestone_id,
                 m.plan_id,
-                rp.course_code,
+                e.course_code,
                 c.CourseName,
                 m.study_week,
                 m.title,
@@ -283,11 +289,13 @@ public class AdminStudentProfileDAO {
                 m.grade,
                 m.remarks
             FROM milestones m
-            INNER JOIN recovery_plans rp
-                    ON rp.plan_id = m.plan_id
+            JOIN recovery_plans rp
+                 ON rp.plan_id = m.plan_id
+            JOIN enrolments e
+                 ON e.enrolment_id = rp.enrolment_id
             LEFT JOIN courses c
-                   ON c.CourseID = rp.course_code
-            WHERE rp.student_id = ?
+                 ON c.CourseID = e.course_code
+            WHERE e.student_id = ?
             ORDER BY m.due_date ASC, m.milestone_id ASC
             """;
 

@@ -10,6 +10,7 @@ public class EligibilityResult implements Serializable {
     private int failedCourseCount;
     private boolean eligible;
     private List<String> reasons = new ArrayList<>();
+    private List<AdminStudentResultRow> grades = new ArrayList<>();
 
     public EligibilityResult() {}
 
@@ -36,7 +37,11 @@ public class EligibilityResult implements Serializable {
     public List<String> getReasons() { return reasons; }
     public void setReasons(List<String> reasons) { this.reasons = reasons; }
 
-    @Override public String toString() {
+    public List<AdminStudentResultRow> getGrades() { return grades; }
+    public void setGrades(List<AdminStudentResultRow> grades) { this.grades = grades; }
+
+    @Override
+    public String toString() {
         return "EligibilityResult{studentId='" + studentId + "', cgpa=" + cgpa +
                ", failedCourseCount=" + failedCourseCount + ", eligible=" + eligible + "}";
     }

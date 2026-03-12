@@ -1,8 +1,10 @@
 package com.crs.ejb;
 
 import com.crs.dao.StudentDAO;
+import com.crs.dao.StudentResultDAO;
 import com.crs.ejb.dto.EligibilityResult;
 import jakarta.ejb.Stateless;
+
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,10 +13,14 @@ import java.util.List;
 public class EligibilityEJB {
 
     public EligibilityResult checkStudent(String studentId) throws SQLException {
-        if (studentId == null || studentId.isBlank()) throw new IllegalArgumentException("studentId is required.");
+        if (studentId == null || studentId.isBlank()) {
+            throw new IllegalArgumentException("studentId is required.");
+        }
         studentId = studentId.trim();
 
         StudentDAO dao = new StudentDAO();
+        StudentResultDAO resultDAO = new StudentResultDAO();
+
         double cgpa = dao.calculateCgpaOverall(studentId);
         int failedCount = dao.countFailedCourses(studentId);
 
@@ -29,7 +35,9 @@ public class EligibilityEJB {
             eligible = false;
             reasons.add("Failed courses exceed 3 (current: " + failedCount + ")");
         }
-        if (eligible) reasons.add("Eligible: CGPA >= 2.0 and failed courses <= 3.");
+        if (eligible) {
+            reasons.add("Eligible: CGPA >= 2.0 and failed courses <= 3.");
+        }
 
         EligibilityResult r = new EligibilityResult();
         r.setStudentId(studentId);
@@ -37,7 +45,8 @@ public class EligibilityEJB {
         r.setFailedCourseCount(failedCount);
         r.setEligible(eligible);
         r.setReasons(reasons);
+        r.setGrades(resultDAO.findDetailedResultsByStudent(studentId));
+
         return r;
     }
 }
-
