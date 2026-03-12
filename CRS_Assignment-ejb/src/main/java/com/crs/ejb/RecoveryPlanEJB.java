@@ -1,11 +1,11 @@
 package com.crs.ejb;
 
-import com.crs.dao.EnrolmentDAO;
 import com.crs.dao.MilestoneDAO;
 import com.crs.dao.RecoveryPlanDAO;
-import com.crs.entity.Enrolment;
+import com.crs.dao.StudentResultDAO;
 import com.crs.entity.Milestone;
 import com.crs.entity.RecoveryPlan;
+import com.crs.entity.StudentResult;
 import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
 
@@ -17,33 +17,44 @@ import java.util.List;
 public class RecoveryPlanEJB {
 
     private final RecoveryPlanDAO planDAO = new RecoveryPlanDAO();
-    private final EnrolmentDAO enrolmentDAO = new EnrolmentDAO();
+    private final StudentResultDAO studentResultDAO = new StudentResultDAO();
 
     @EJB
     private NotificationEJB notificationEJB;
 
-    /**
-     * Create plan for any valid enrolment record.
-     * Do NOT block by APPROVED / CGPA rule.
-     */
-    public long createPlanForApprovedEnrolment(long enrolmentId, String recommendation, long academicUserId) throws SQLException {
-        Enrolment e = enrolmentDAO.findById(enrolmentId);
-        if (e == null) {
-            throw new IllegalArgumentException("Invalid enrolment ID.");
+    public long createPlan(String studentId, String courseCode, int attemptNo,
+                           String recommendation, long academicUserId) throws SQLException {
+
+        if (studentId == null || studentId.isBlank()) {
+            throw new IllegalArgumentException("studentId is required.");
+        }
+        if (courseCode == null || courseCode.isBlank()) {
+            throw new IllegalArgumentException("courseCode is required.");
+        }
+        if (attemptNo <= 0) {
+            throw new IllegalArgumentException("attemptNo must be > 0.");
         }
 
-        RecoveryPlan existing = planDAO.findByEnrolmentId(enrolmentId);
+        studentId = studentId.trim();
+        courseCode = courseCode.trim().toUpperCase();
+
+        List<StudentResult> failedComponents = studentResultDAO.findFailedComponents(studentId, courseCode, attemptNo);
+        if (failedComponents == null || failedComponents.isEmpty()) {
+            throw new IllegalStateException("Recovery plan can only be created for a failed course attempt.");
+        }
+
+        RecoveryPlan existing = planDAO.findByStudentCourseAttempt(studentId, courseCode, attemptNo);
         if (existing != null) {
-            throw new IllegalStateException("Recovery plan already exists for this enrolment.");
+            throw new IllegalStateException("Recovery plan already exists for this student/course/attempt.");
         }
 
         RecoveryPlan p = new RecoveryPlan();
-        p.setEnrolmentId(enrolmentId);
-        p.setStudentId(e.getStudentId());
-        p.setCourseCode(e.getCourseCode());
-        p.setAttemptNo(e.getAttemptNo());
+        p.setStudentId(studentId);
+        p.setCourseCode(courseCode);
+        p.setAttemptNo(attemptNo);
         p.setRecommendation(recommendation == null ? "" : recommendation.trim());
         p.setCreatedByUserId(academicUserId);
+        p.setEnrolmentId(null);
 
         long planId = planDAO.insert(p);
 
@@ -51,7 +62,7 @@ public class RecoveryPlanEJB {
             if (notificationEJB != null) {
                 notificationEJB.sendMilestoneReminderEmail(
                         "student@example.com",
-                        "Recovery plan created for enrolment #" + enrolmentId,
+                        "Recovery plan created for " + studentId + " / " + courseCode,
                         "Plan ID: " + planId
                 );
             }
@@ -61,25 +72,17 @@ public class RecoveryPlanEJB {
         return planId;
     }
 
-    public RecoveryPlan getPlanByEnrolmentId(long enrolmentId) throws SQLException {
-        return planDAO.findByEnrolmentId(enrolmentId);
+    public RecoveryPlan getPlan(String studentId, String courseCode, int attemptNo) throws SQLException {
+        return planDAO.findByStudentCourseAttempt(studentId, courseCode, attemptNo);
     }
 
-    /**
-     * Update recommendation without APPROVED-only restriction.
-     */
-    public void updateRecommendation(long enrolmentId, String recommendation) throws SQLException {
-        Enrolment e = enrolmentDAO.findById(enrolmentId);
-        if (e == null) {
-            throw new IllegalArgumentException("Invalid enrolment ID.");
+    public void updateRecommendation(String studentId, String courseCode, int attemptNo, String recommendation) throws SQLException {
+        RecoveryPlan plan = planDAO.findByStudentCourseAttempt(studentId, courseCode, attemptNo);
+        if (plan == null) {
+            throw new IllegalStateException("No recovery plan exists for this student/course/attempt.");
         }
 
-        RecoveryPlan p = planDAO.findByEnrolmentId(enrolmentId);
-        if (p == null) {
-            throw new IllegalStateException("No plan exists for this enrolment.");
-        }
-
-        planDAO.updateRecommendation(p.getPlanId(), recommendation == null ? "" : recommendation.trim());
+        planDAO.updateRecommendation(plan.getPlanId(), recommendation == null ? "" : recommendation.trim());
     }
 
     public List<Milestone> listMilestones(long planId) throws SQLException {
@@ -116,17 +119,23 @@ public class RecoveryPlanEJB {
     }
 
     public void updateMilestone(Milestone m) throws SQLException {
-        if (m == null || m.getMilestoneId() <= 0) throw new IllegalArgumentException("milestone invalid");
+        if (m == null || m.getMilestoneId() <= 0) {
+            throw new IllegalArgumentException("milestone invalid");
+        }
         new MilestoneDAO().update(m);
     }
 
     public void deleteMilestone(long milestoneId) throws SQLException {
-        if (milestoneId <= 0) throw new IllegalArgumentException("milestoneId invalid");
+        if (milestoneId <= 0) {
+            throw new IllegalArgumentException("milestoneId invalid");
+        }
         new MilestoneDAO().delete(milestoneId);
     }
 
     public void markDone(long milestoneId, String grade) throws SQLException {
-        if (milestoneId <= 0) throw new IllegalArgumentException("milestoneId invalid");
+        if (milestoneId <= 0) {
+            throw new IllegalArgumentException("milestoneId invalid");
+        }
         new MilestoneDAO().markDone(milestoneId, grade);
     }
 }

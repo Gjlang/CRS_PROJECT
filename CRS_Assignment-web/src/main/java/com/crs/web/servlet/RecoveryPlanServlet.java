@@ -1,13 +1,16 @@
 package com.crs.web.servlet;
 
+import com.crs.dao.StudentResultDAO;
 import com.crs.ejb.MilestoneEJB;
 import com.crs.ejb.RecoveryPlanEJB;
+import com.crs.ejb.dto.RecoveryCandidateRow;
 import com.crs.entity.Milestone;
 import com.crs.entity.RecoveryPlan;
 import jakarta.ejb.EJB;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
+
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
@@ -21,71 +24,82 @@ public class RecoveryPlanServlet extends HttpServlet {
     @EJB
     private MilestoneEJB milestoneEJB;
 
-    // ─────────────────────────────────────────────
-    // doGet — load plan + milestones by enrolment_id
-    // ─────────────────────────────────────────────
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String enrolmentIdStr = req.getParameter("enrolment_id");
+        String studentId = req.getParameter("student_id");
+        String courseCode = req.getParameter("course_code");
+        String attemptNoStr = req.getParameter("attempt_no");
 
-        // Fallback to session if not in URL (e.g. clicked from sidebar)
-        if (enrolmentIdStr == null || enrolmentIdStr.isBlank()) {
-            Object selected = req.getSession().getAttribute("selectedEnrolmentId");
-            if (selected != null) enrolmentIdStr = String.valueOf(selected);
-        }
-
-        // Still nothing — send to enrolments to pick one
-        if (enrolmentIdStr == null || enrolmentIdStr.isBlank()) {
-            resp.sendRedirect(req.getContextPath() + "/academic/enrolments");
-            return;
-        }
+        req.setAttribute("planActionUrl", req.getContextPath() + req.getServletPath());
+        req.setAttribute("activePage", "academic_recovery_plan");
 
         try {
-            long enrolmentId = Long.parseLong(enrolmentIdStr);
-            RecoveryPlan plan = recoveryPlanEJB.getPlanByEnrolmentId(enrolmentId);
-            List<Milestone> milestones = milestoneEJB.list(enrolmentId);
+            // State A: first open page, no student selected yet
+            if (studentId == null || studentId.isBlank()) {
+                req.getRequestDispatcher("/academic/recovery_plan.jsp").forward(req, resp);
+                return;
+            }
 
-            req.setAttribute("enrolmentId", enrolmentId);
+            studentId = studentId.trim();
+            req.setAttribute("studentId", studentId);
+
+            // State B: show failed course attempts for selected student
+            StudentResultDAO resultDAO = new StudentResultDAO();
+            List<RecoveryCandidateRow> candidates = resultDAO.findRecoveryCandidatesByStudent(studentId);
+            req.setAttribute("candidates", candidates);
+
+            // If course/attempt not selected yet, just show candidate list
+            if (courseCode == null || courseCode.isBlank() || attemptNoStr == null || attemptNoStr.isBlank()) {
+                req.getRequestDispatcher("/academic/recovery_plan.jsp").forward(req, resp);
+                return;
+            }
+
+            // State C: show selected plan
+            int attemptNo = Integer.parseInt(attemptNoStr);
+
+            RecoveryPlan plan = recoveryPlanEJB.getPlan(studentId, courseCode, attemptNo);
+            List<Milestone> milestones = milestoneEJB.list(studentId, courseCode, attemptNo);
+
+            req.setAttribute("courseCode", courseCode);
+            req.setAttribute("attemptNo", attemptNo);
             req.setAttribute("plan", plan);
             req.setAttribute("milestones", milestones);
-            req.setAttribute("planActionUrl", req.getContextPath() + req.getServletPath());
-            req.setAttribute("activePage", "academic_recovery_plan");
 
         } catch (NumberFormatException e) {
-            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid enrolment_id");
-            return;
+            req.setAttribute("error", "Invalid attempt number.");
         } catch (Exception e) {
-            req.setAttribute("error", "Failed to load plan: " + e.getMessage());
+            req.setAttribute("error", "Failed to load recovery plan: " + e.getMessage());
         }
 
         req.getRequestDispatcher("/academic/recovery_plan.jsp").forward(req, resp);
     }
 
-    // ─────────────────────────────────────────────
-    // doPost — enrolment-based actions only
-    // ─────────────────────────────────────────────
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String action = req.getParameter("action");
-        String enrolmentIdStr = req.getParameter("enrolment_id");
-        long userId = (long) req.getSession().getAttribute("userId");
+        String studentId = req.getParameter("student_id");
+        String courseCode = req.getParameter("course_code");
+        String attemptNoStr = req.getParameter("attempt_no");
 
-        // Fallback to session
-        if (enrolmentIdStr == null || enrolmentIdStr.isBlank()) {
-            Object selected = req.getSession().getAttribute("selectedEnrolmentId");
-            if (selected != null) enrolmentIdStr = String.valueOf(selected);
-        }
+        Object userIdObj = req.getSession().getAttribute("userId");
+        long userId = (userIdObj instanceof Long)
+                ? (Long) userIdObj
+                : Long.parseLong(String.valueOf(userIdObj));
 
-        if (enrolmentIdStr == null || enrolmentIdStr.isBlank()) {
-            resp.sendRedirect(req.getContextPath() + "/academic/enrolments");
+        if (studentId == null || studentId.isBlank()
+                || courseCode == null || courseCode.isBlank()
+                || attemptNoStr == null || attemptNoStr.isBlank()) {
+            req.setAttribute("error", "student_id, course_code, and attempt_no are required.");
+            doGet(req, resp);
             return;
         }
 
-        long enrolmentId;
+        int attemptNo;
         try {
-            enrolmentId = Long.parseLong(enrolmentIdStr);
+            attemptNo = Integer.parseInt(attemptNoStr);
         } catch (NumberFormatException e) {
-            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid enrolment_id");
+            req.setAttribute("error", "Invalid attempt_no.");
+            doGet(req, resp);
             return;
         }
 
@@ -94,54 +108,35 @@ public class RecoveryPlanServlet extends HttpServlet {
         try {
             if ("createPlan".equals(action)) {
                 String recommendation = req.getParameter("recommendation");
-                recoveryPlanEJB.createPlanForApprovedEnrolment(enrolmentId, recommendation, userId);
-                resp.sendRedirect(base + "?enrolment_id=" + enrolmentId);
-                return;
+                recoveryPlanEJB.createPlan(studentId, courseCode, attemptNo, recommendation, userId);
 
             } else if ("updatePlan".equals(action)) {
                 String recommendation = req.getParameter("recommendation");
-                recoveryPlanEJB.updateRecommendation(enrolmentId, recommendation);
-                resp.sendRedirect(base + "?enrolment_id=" + enrolmentId);
-                return;
+                recoveryPlanEJB.updateRecommendation(studentId, courseCode, attemptNo, recommendation);
 
             } else if ("addMilestone".equals(action)) {
                 String title = req.getParameter("title");
-                String task  = req.getParameter("task"); // ✅ NEW
-                String due = req.getParameter("due_date"); // yyyy-MM-dd
+                String task = req.getParameter("task");
+                String due = req.getParameter("due_date");
                 LocalDate dueDate = (due == null || due.isBlank()) ? null : LocalDate.parse(due);
                 String remarks = req.getParameter("remarks");
 
-                // optional safety
-                if (task == null || task.isBlank()) {
-                    throw new IllegalArgumentException("Task cannot be empty.");
-                }
-
-                // ✅ pass task into EJB
-                milestoneEJB.add(enrolmentId, title, task, dueDate, remarks);
-
-                resp.sendRedirect(base + "?enrolment_id=" + enrolmentId);
-                return;
-            
+                milestoneEJB.add(studentId, courseCode, attemptNo, title, task, dueDate, remarks);
 
             } else if ("updateMilestone".equals(action)) {
                 long milestoneId = Long.parseLong(req.getParameter("milestone_id"));
                 String status = req.getParameter("status");
                 String remarks = req.getParameter("remarks");
-                milestoneEJB.updateStatus(milestoneId, status, remarks);
-                resp.sendRedirect(base + "?enrolment_id=" + enrolmentId);
-                return;
 
-            } else {
-                resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unknown or unsupported action.");
-                return;
+                milestoneEJB.updateStatus(milestoneId, status, remarks);
             }
 
-        } catch (SecurityException | IllegalStateException | IllegalArgumentException e) {
-            req.setAttribute("error", e.getMessage());
+            resp.sendRedirect(base + "?student_id=" + studentId + "&course_code=" + courseCode + "&attempt_no=" + attemptNo);
+            return;
+
         } catch (Exception e) {
             req.setAttribute("error", "Failed: " + e.getMessage());
+            doGet(req, resp);
         }
-
-        doGet(req, resp);
     }
 }

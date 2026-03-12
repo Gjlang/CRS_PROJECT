@@ -20,31 +20,31 @@ public class MilestoneServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
-        String enrolmentIdStr = req.getParameter("enrolment_id");
+        String studentId = req.getParameter("student_id");
+        String courseCode = req.getParameter("course_code");
+        String attemptNoStr = req.getParameter("attempt_no");
 
-        // Fallback to session if not in URL (e.g. clicked from sidebar)
-        if (enrolmentIdStr == null || enrolmentIdStr.isBlank()) {
-            Object selected = req.getSession().getAttribute("selectedEnrolmentId");
-            if (selected != null) enrolmentIdStr = String.valueOf(selected);
-        }
-
-        // Still nothing — send to enrolments to pick one
-        if (enrolmentIdStr == null || enrolmentIdStr.isBlank()) {
-            resp.sendRedirect(req.getContextPath() + "/academic/enrolments");
+        if (studentId == null || studentId.isBlank()
+                || courseCode == null || courseCode.isBlank()
+                || attemptNoStr == null || attemptNoStr.isBlank()) {
+            req.setAttribute("error", "student_id, course_code, and attempt_no are required.");
+            req.getRequestDispatcher("/academic/milestones.jsp").forward(req, resp);
             return;
         }
 
         try {
-            long enrolmentId = Long.parseLong(enrolmentIdStr);
-            List<Milestone> milestones = milestoneEJB.list(enrolmentId);
+            int attemptNo = Integer.parseInt(attemptNoStr);
 
-            req.setAttribute("enrolmentId", enrolmentId);
+            List<Milestone> milestones = milestoneEJB.list(studentId, courseCode, attemptNo);
+
+            req.setAttribute("studentId", studentId);
+            req.setAttribute("courseCode", courseCode);
+            req.setAttribute("attemptNo", attemptNo);
             req.setAttribute("milestones", milestones);
             req.setAttribute("activePage", "academic_milestones");
 
         } catch (NumberFormatException e) {
-            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid enrolment_id");
-            return;
+            req.setAttribute("error", "Invalid attempt_no.");
         } catch (Exception e) {
             req.setAttribute("error", "Failed to load milestones: " + e.getMessage());
         }
@@ -55,6 +55,17 @@ public class MilestoneServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         // All milestone write actions go through RecoveryPlanServlet
-        resp.sendRedirect(req.getContextPath() + "/academic/enrolments");
+        String studentId = req.getParameter("student_id");
+        String courseCode = req.getParameter("course_code");
+        String attemptNo = req.getParameter("attempt_no");
+
+        if (studentId != null && courseCode != null && attemptNo != null) {
+            resp.sendRedirect(req.getContextPath() + "/academic/recovery_plan"
+                    + "?student_id=" + studentId
+                    + "&course_code=" + courseCode
+                    + "&attempt_no=" + attemptNo);
+        } else {
+            resp.sendRedirect(req.getContextPath() + "/academic/enrolments");
+        }
     }
 }

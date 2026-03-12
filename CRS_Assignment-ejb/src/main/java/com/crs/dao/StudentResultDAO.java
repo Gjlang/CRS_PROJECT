@@ -126,6 +126,48 @@ public class StudentResultDAO {
         }
     }
 
+    // STEP 2: New method — returns all failed course attempts for a student,
+    // grouped by course and attempt, used to populate recovery plan candidates.
+    public List<com.crs.ejb.dto.RecoveryCandidateRow> findRecoveryCandidatesByStudent(String studentId) throws SQLException {
+        String sql = """
+            SELECT
+                r.student_id,
+                r.course_code,
+                c.CourseName,
+                r.attempt_no,
+                COUNT(*) AS failed_component_count
+            FROM student_results r
+            LEFT JOIN courses c
+                   ON c.CourseID = r.course_code
+            WHERE r.student_id = ?
+              AND r.failed = 1
+            GROUP BY r.student_id, r.course_code, c.CourseName, r.attempt_no
+            ORDER BY r.course_code, r.attempt_no
+            """;
+
+        List<com.crs.ejb.dto.RecoveryCandidateRow> list = new ArrayList<>();
+
+        try (Connection con = DbUtil.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setString(1, studentId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    com.crs.ejb.dto.RecoveryCandidateRow row = new com.crs.ejb.dto.RecoveryCandidateRow();
+                    row.setStudentId(rs.getString("student_id"));
+                    row.setCourseCode(rs.getString("course_code"));
+                    row.setCourseName(rs.getString("CourseName"));
+                    row.setAttemptNo(rs.getInt("attempt_no"));
+                    row.setFailedComponentCount(rs.getInt("failed_component_count"));
+                    list.add(row);
+                }
+            }
+        }
+
+        return list;
+    }
+
     private StudentResult map(ResultSet rs) throws SQLException {
         return new StudentResult(
                 rs.getLong("result_id"),
