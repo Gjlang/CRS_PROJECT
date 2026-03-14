@@ -157,6 +157,25 @@ public class EnrolmentDAO {
             }
         }
     }
+    
+    public Enrolment findApprovedByStudentCourseAttempt(String studentId, String courseCode, int attemptNo) throws SQLException {
+        String sql = "SELECT enrolment_id, student_id, course_code, attempt_no, eligibility_status, enrolment_status, " +
+                     "created_by_user_id, decided_by_user_id, decided_at, reject_reason, created_at " +
+                     "FROM enrolments " +
+                     "WHERE student_id=? AND course_code=? AND attempt_no=? AND enrolment_status='APPROVED' " +
+                     "ORDER BY enrolment_id DESC LIMIT 1";
+
+        try (Connection con = DbUtil.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, studentId);
+            ps.setString(2, courseCode);
+            ps.setInt(3, attemptNo);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? map(rs) : null;
+            }
+        }
+    }
 
     public Enrolment findApprovedById(long enrolmentId) throws SQLException {
         String sql = "SELECT enrolment_id, student_id, course_code, attempt_no, eligibility_status, enrolment_status, " +

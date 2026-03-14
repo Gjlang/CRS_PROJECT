@@ -11,12 +11,17 @@
 <div class="card">
 
   <c:if test="${not empty error}">
-    <div style="color:red;">${error}</div>
+    <div style="color:red; margin-bottom:12px;">${error}</div>
   </c:if>
 
-  <form method="post" action="${pageContext.request.contextPath}/academic/enrolments">
+  <div style="margin-bottom:12px; color:#555;">
+    Create a recovery enrolment request for a specific failed course attempt.
+  </div>
+
+  <form method="post" action="${pageContext.request.contextPath}/academic/enrolments" style="display:flex; gap:10px; flex-wrap:wrap;">
     <input name="student_id" placeholder="Student ID" required/>
     <input name="course_code" placeholder="Course Code" required/>
+    <input name="attempt_no" type="number" min="1" max="3" placeholder="Attempt No" required/>
     <button type="submit">Create Request</button>
   </form>
 
@@ -25,9 +30,16 @@
   <h3>My Requests</h3>
   <table border="1" cellpadding="6">
     <tr>
-      <th>ID</th><th>Student</th><th>Course</th><th>Attempt</th>
-      <th>Eligibility</th><th>Status</th><th>Reject Reason</th><th>Action</th>
+      <th>ID</th>
+      <th>Student</th>
+      <th>Course</th>
+      <th>Attempt</th>
+      <th>Eligibility</th>
+      <th>Status</th>
+      <th>Reject Reason</th>
+      <th>Action</th>
     </tr>
+
     <c:forEach var="e" items="${requests}">
       <tr>
         <td>${e.enrolmentId}</td>
@@ -39,17 +51,8 @@
         <td>${e.rejectReason}</td>
         <td>
           <c:if test="${e.enrolmentStatus == 'APPROVED'}">
-            <%-- Select this enrolment into session so sidebar links work --%>
-            <a href="${pageContext.request.contextPath}/academic/select_enrolment?enrolment_id=${e.enrolmentId}">
-              Select
-            </a>
-            &nbsp;|&nbsp;
-            <a href="${pageContext.request.contextPath}/academic/recovery_plan?enrolment_id=${e.enrolmentId}">
+            <a href="${pageContext.request.contextPath}/academic/recovery_plan">
               Recovery Plan
-            </a>
-            &nbsp;|&nbsp;
-            <a href="${pageContext.request.contextPath}/academic/milestones?enrolment_id=${e.enrolmentId}">
-              Milestones
             </a>
           </c:if>
         </td>

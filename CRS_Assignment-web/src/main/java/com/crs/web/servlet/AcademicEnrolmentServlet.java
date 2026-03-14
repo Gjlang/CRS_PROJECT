@@ -5,6 +5,7 @@ import jakarta.ejb.EJB;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
+
 import java.io.IOException;
 
 @WebServlet({"/academic/enrolment", "/academic/enrolments"})
@@ -28,19 +29,25 @@ public class AcademicEnrolmentServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String studentId = req.getParameter("student_id");
         String courseCode = req.getParameter("course_code");
+        String attemptNoStr = req.getParameter("attempt_no");
 
         try {
+            if (attemptNoStr == null || attemptNoStr.isBlank()) {
+                throw new IllegalArgumentException("Attempt No is required.");
+            }
+
+            int attemptNo = Integer.parseInt(attemptNoStr.trim());
             long userId = (long) req.getSession().getAttribute("userId");
+
             enrolmentEJB.createEnrolment(
-                studentId == null ? "" : studentId.trim(),
-                courseCode == null ? "" : courseCode.trim(),
-                userId);
-            // Redirect on success to prevent form resubmit on refresh
+                    studentId == null ? "" : studentId.trim(),
+                    courseCode == null ? "" : courseCode.trim(),
+                    attemptNo,
+                    userId
+            );
+
             resp.sendRedirect(req.getContextPath() + "/academic/enrolment");
-        } catch (IllegalStateException e) {
-            // Eligibility FAIL, max attempts, already decided — show clean message
-            req.setAttribute("error", e.getMessage());
-            doGet(req, resp);
+
         } catch (Exception e) {
             req.setAttribute("error", "Create enrolment failed: " + e.getMessage());
             doGet(req, resp);

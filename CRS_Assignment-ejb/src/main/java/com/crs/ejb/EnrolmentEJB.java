@@ -2,10 +2,12 @@ package com.crs.ejb;
 
 import com.crs.dao.EnrolmentDAO;
 import com.crs.dao.StudentDAO;
+import com.crs.dao.StudentResultDAO;
 import com.crs.ejb.dto.EligibilityResult;
 import com.crs.ejb.exception.BusinessException;
 import com.crs.entity.Enrolment;
 import com.crs.entity.Student;
+import com.crs.entity.StudentResult;
 
 import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
@@ -27,41 +29,61 @@ public class EnrolmentEJB {
     private NotificationEJB notificationEJB;
 
     private final EnrolmentDAO enrolmentDAO = new EnrolmentDAO();
+    private final StudentResultDAO studentResultDAO = new StudentResultDAO();
 
-    public long createEnrolment(String studentId, String courseCode, long createdByUserId) throws SQLException {
-        if (studentId == null || studentId.isBlank()) throw new IllegalArgumentException("studentId is required.");
-        if (courseCode == null || courseCode.isBlank()) throw new IllegalArgumentException("courseCode is required.");
+    public long createEnrolment(String studentId, String courseCode, int attemptNo, long createdByUserId) throws SQLException {
+        if (studentId == null || studentId.isBlank()) {
+            throw new IllegalArgumentException("studentId is required.");
+        }
+        if (courseCode == null || courseCode.isBlank()) {
+            throw new IllegalArgumentException("courseCode is required.");
+        }
+        if (attemptNo <= 0 || attemptNo > 3) {
+            throw new BusinessException("Attempt number must be between 1 and 3.");
+        }
 
-        final String cleanStudentId = studentId.trim();
+        final String cleanStudentId = studentId.trim().toUpperCase();
         final String cleanCourseCode = courseCode.trim().toUpperCase();
 
-        int maxAttempt = enrolmentDAO.getMaxAttempt(cleanStudentId, cleanCourseCode); 
-        if (maxAttempt >= 3) {
-            throw new BusinessException("Course recovery policy: max 3 attempts per course. Current max attempt = " + maxAttempt);
+        // 1) Must be a failed course attempt
+        List<StudentResult> failedComponents =
+                studentResultDAO.findFailedComponents(cleanStudentId, cleanCourseCode, attemptNo);
+
+        if (failedComponents == null || failedComponents.isEmpty()) {
+            throw new BusinessException(
+                    "Cannot create recovery enrolment: no failed components found for "
+                            + cleanStudentId + " / " + cleanCourseCode + " / attempt " + attemptNo + "."
+            );
         }
 
-        int nextAttempt = maxAttempt + 1;
-
-        EligibilityResult er = eligibilityEJB.checkStudent(cleanStudentId); 
-
-        if (!er.isEligible()) {
-            throw new BusinessException("Not eligible for enrolment: " + String.join("; ", er.getReasons()));
+        // 2) Prevent duplicate request for same exact student-course-attempt
+        Enrolment existing = enrolmentDAO.findByStudentCourseAttempt(cleanStudentId, cleanCourseCode, attemptNo);
+        if (existing != null) {
+            throw new BusinessException(
+                    "A recovery enrolment request already exists for "
+                            + cleanStudentId + " / " + cleanCourseCode + " / attempt " + attemptNo + "."
+            );
         }
+
+        // 3) Eligibility is informational for progression, not a hard blocker for recovery request
+        EligibilityResult er = eligibilityEJB.checkStudent(cleanStudentId);
+        String eligibilityStatus = er.isEligible() ? "PASS" : "FAIL";
 
         Enrolment e = new Enrolment();
-        e.setStudentId(cleanStudentId);    
-        e.setCourseCode(cleanCourseCode); 
-        e.setAttemptNo(nextAttempt);
-        e.setEligibilityStatus("PASS");
+        e.setStudentId(cleanStudentId);
+        e.setCourseCode(cleanCourseCode);
+        e.setAttemptNo(attemptNo);
+        e.setEligibilityStatus(eligibilityStatus);
         e.setEnrolmentStatus("PENDING");
         e.setCreatedByUserId(createdByUserId);
 
         long id = enrolmentDAO.createPending(e);
 
-        LOG.info(() -> "ENROLMENT_CREATED enrolmentId=" + id +
+        LOG.info(() -> "RECOVERY_ENROLMENT_CREATED enrolmentId=" + id +
                 " studentId=" + cleanStudentId +
                 " courseCode=" + cleanCourseCode +
-                " attemptNo=" + nextAttempt +
+                " attemptNo=" + attemptNo +
+                " eligibilityStatus=" + eligibilityStatus +
                 " createdByUserId=" + createdByUserId);
 
         if (notificationEJB != null) {
@@ -71,8 +93,8 @@ public class EnrolmentEJB {
                 if (recipient != null && !recipient.isBlank()) {
                     notificationEJB.sendMilestoneReminderEmail(
                             recipient,
-                            "Enrolment request created: " + cleanStudentId + " -> " + cleanCourseCode,
-                            "Your enrolment request is PENDING (Eligibility: PASS)."
+                            "Recovery enrolment request created: " + cleanStudentId + " -> " + cleanCourseCode,
+                            "Your recovery enrolment request is PENDING. Eligibility status: " + eligibilityStatus
                     );
                 }
             } catch (Exception ex) {

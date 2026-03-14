@@ -28,57 +28,60 @@ public class RecoveryPlanEJB {
     public long createPlan(String studentId, String courseCode, int attemptNo,
             String recommendation, long academicUserId) throws SQLException {
 
-		if (studentId == null || studentId.isBlank()) {
-		throw new IllegalArgumentException("studentId is required.");
-		}
-		if (courseCode == null || courseCode.isBlank()) {
-		throw new IllegalArgumentException("courseCode is required.");
-		}
-		if (attemptNo <= 0) {
-		throw new IllegalArgumentException("attemptNo must be > 0.");
-		}
-		
-		studentId = studentId.trim();
-		courseCode = courseCode.trim().toUpperCase();
-		
-		List<StudentResult> failedComponents = studentResultDAO.findFailedComponents(studentId, courseCode, attemptNo);
-		if (failedComponents == null || failedComponents.isEmpty()) {
-		throw new IllegalStateException("Recovery plan can only be created for a failed course attempt.");
-		}
-		
-		RecoveryPlan existing = planDAO.findByStudentCourseAttempt(studentId, courseCode, attemptNo);
-		if (existing != null) {
-		throw new IllegalStateException("Recovery plan already exists for this student/course/attempt.");
-		}
-		
-		Enrolment enrolment = enrolmentDAO.findByStudentCourseAttempt(studentId, courseCode, attemptNo);
-		if (enrolment == null) {
-		throw new IllegalStateException("No enrolment record found for this student/course/attempt. Create the enrolment first.");
-		}
-		
-		RecoveryPlan p = new RecoveryPlan();
-		p.setStudentId(studentId);
-		p.setCourseCode(courseCode);
-		p.setAttemptNo(attemptNo);
-		p.setRecommendation(recommendation == null ? "" : recommendation.trim());
-		p.setCreatedByUserId(academicUserId);
-		p.setEnrolmentId(enrolment.getEnrolmentId());
-		
-		long planId = planDAO.insert(p);
-		
-		try {
-		if (notificationEJB != null) {
-		 notificationEJB.sendMilestoneReminderEmail(
-		         "student@example.com",
-		         "Recovery plan created for " + studentId + " / " + courseCode,
-		         "Plan ID: " + planId
-		 );
-		}
-		} catch (Exception ignored) {
-		}
-		
-		return planId;
-		}
+        if (studentId == null || studentId.isBlank()) {
+            throw new IllegalArgumentException("studentId is required.");
+        }
+        if (courseCode == null || courseCode.isBlank()) {
+            throw new IllegalArgumentException("courseCode is required.");
+        }
+        if (attemptNo <= 0) {
+            throw new IllegalArgumentException("attemptNo must be > 0.");
+        }
+
+        studentId = studentId.trim().toUpperCase();
+        courseCode = courseCode.trim().toUpperCase();
+
+        List<StudentResult> failedComponents = studentResultDAO.findFailedComponents(studentId, courseCode, attemptNo);
+        if (failedComponents == null || failedComponents.isEmpty()) {
+            throw new IllegalStateException("Recovery plan can only be created for a failed course attempt.");
+        }
+
+        RecoveryPlan existing = planDAO.findByStudentCourseAttempt(studentId, courseCode, attemptNo);
+        if (existing != null) {
+            throw new IllegalStateException("Recovery plan already exists for this student/course/attempt.");
+        }
+
+        Enrolment enrolment = enrolmentDAO.findApprovedByStudentCourseAttempt(studentId, courseCode, attemptNo);
+        if (enrolment == null) {
+            throw new IllegalStateException(
+                    "No APPROVED recovery enrolment found for this student/course/attempt. " +
+                    "Academic must create the request first and Admin must approve it."
+            );
+        }
+
+        RecoveryPlan p = new RecoveryPlan();
+        p.setStudentId(studentId);
+        p.setCourseCode(courseCode);
+        p.setAttemptNo(attemptNo);
+        p.setRecommendation(recommendation == null ? "" : recommendation.trim());
+        p.setCreatedByUserId(academicUserId);
+        p.setEnrolmentId(enrolment.getEnrolmentId());
+
+        long planId = planDAO.insert(p);
+
+        try {
+            if (notificationEJB != null) {
+                notificationEJB.sendMilestoneReminderEmail(
+                        "student@example.com",
+                        "Recovery plan created for " + studentId + " / " + courseCode,
+                        "Plan ID: " + planId
+                );
+            }
+        } catch (Exception ignored) {
+        }
+
+        return planId;
+    }
 
     public RecoveryPlan getPlan(String studentId, String courseCode, int attemptNo) throws SQLException {
         return planDAO.findByStudentCourseAttempt(studentId, courseCode, attemptNo);
