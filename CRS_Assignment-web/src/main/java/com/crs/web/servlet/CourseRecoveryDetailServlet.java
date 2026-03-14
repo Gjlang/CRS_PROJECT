@@ -1,11 +1,9 @@
 package com.crs.web.servlet;
 
-import com.crs.dao.EnrolmentDAO;
 import com.crs.dao.StudentResultDAO;
 import com.crs.ejb.MilestoneEJB;
 import com.crs.ejb.RecoveryPlanEJB;
 import com.crs.ejb.dto.RecoveryCandidateRow;
-import com.crs.entity.Enrolment;
 import com.crs.entity.Milestone;
 import com.crs.entity.RecoveryPlan;
 import com.crs.entity.StudentResult;
@@ -56,10 +54,6 @@ public class CourseRecoveryDetailServlet extends HttpServlet {
 
         try {
             int attemptNo = Integer.parseInt(attemptNoStr);
-
-            EnrolmentDAO enrolmentDAO = new EnrolmentDAO();
-            Enrolment approvedEnrolment = enrolmentDAO.findApprovedByStudentCourseAttempt(studentId, courseCode, attemptNo);
-            req.setAttribute("approvedEnrolment", approvedEnrolment);
 
             StudentResultDAO dao = new StudentResultDAO();
             List<StudentResult> failedComponents = dao.findFailedComponents(studentId, courseCode, attemptNo);

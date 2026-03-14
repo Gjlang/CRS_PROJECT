@@ -17,8 +17,7 @@ public class RecoveryPlanDAO {
                 attempt_no,
                 recommendation,
                 created_by_user_id,
-                created_at,
-                enrolment_id
+                created_at
             FROM recovery_plans
             WHERE student_id = ? AND course_code = ? AND attempt_no = ?
             """;
@@ -38,8 +37,8 @@ public class RecoveryPlanDAO {
     public long insert(RecoveryPlan p) throws SQLException {
         String sql = """
             INSERT INTO recovery_plans
-            (student_id, course_code, attempt_no, recommendation, created_by_user_id, created_at, enrolment_id)
-            VALUES (?, ?, ?, ?, ?, NOW(), ?)
+            (student_id, course_code, attempt_no, recommendation, created_by_user_id, created_at)
+            VALUES (?, ?, ?, ?, ?, NOW())
             """;
 
         try (Connection con = DbUtil.getConnection();
@@ -50,12 +49,6 @@ public class RecoveryPlanDAO {
             ps.setInt(3, p.getAttemptNo());
             ps.setString(4, p.getRecommendation());
             ps.setLong(5, p.getCreatedByUserId());
-
-            if (p.getEnrolmentId() != null) {
-                ps.setLong(6, p.getEnrolmentId());
-            } else {
-                ps.setNull(6, Types.BIGINT);
-            }
 
             ps.executeUpdate();
 
@@ -103,7 +96,6 @@ public class RecoveryPlanDAO {
         p.setRecommendation(rs.getString("recommendation"));
         p.setCreatedByUserId(rs.getLong("created_by_user_id"));
         p.setCreatedAt(createdAt);
-        p.setEnrolmentId((Long) rs.getObject("enrolment_id"));
 
         return p;
     }

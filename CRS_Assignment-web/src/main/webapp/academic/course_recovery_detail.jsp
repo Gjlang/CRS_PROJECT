@@ -61,20 +61,9 @@
           </tbody>
         </table>
       </div>
-    </c:otherwise>
-  </c:choose>
 
-  <h3 style="margin-top:24px;">Recovery Recommendation</h3>
+      <h3 style="margin-top:24px;">Recovery Recommendation</h3>
 
-  <c:choose>
-    <c:when test="${approvedEnrolment == null}">
-      <div class="alert alert-warning">
-        Recovery plan is locked for now. Academic must create the recovery enrolment request first,
-        and Admin must approve it before recommendation and milestones can be created.
-      </div>
-    </c:when>
-
-    <c:otherwise>
       <c:choose>
         <c:when test="${empty plan}">
           <div class="alert alert-info">No recovery recommendation created yet.</div>

@@ -1,8 +1,6 @@
 package com.crs.ejb;
 
 import com.crs.dao.MilestoneDAO;
-import com.crs.dao.EnrolmentDAO;
-import com.crs.entity.Enrolment;
 import com.crs.dao.RecoveryPlanDAO;
 import com.crs.dao.StudentResultDAO;
 import com.crs.entity.Milestone;
@@ -20,13 +18,12 @@ public class RecoveryPlanEJB {
 
     private final RecoveryPlanDAO planDAO = new RecoveryPlanDAO();
     private final StudentResultDAO studentResultDAO = new StudentResultDAO();
-    private final EnrolmentDAO enrolmentDAO = new EnrolmentDAO();
 
     @EJB
     private NotificationEJB notificationEJB;
 
     public long createPlan(String studentId, String courseCode, int attemptNo,
-            String recommendation, long academicUserId) throws SQLException {
+                           String recommendation, long academicUserId) throws SQLException {
 
         if (studentId == null || studentId.isBlank()) {
             throw new IllegalArgumentException("studentId is required.");
@@ -51,21 +48,12 @@ public class RecoveryPlanEJB {
             throw new IllegalStateException("Recovery plan already exists for this student/course/attempt.");
         }
 
-        Enrolment enrolment = enrolmentDAO.findApprovedByStudentCourseAttempt(studentId, courseCode, attemptNo);
-        if (enrolment == null) {
-            throw new IllegalStateException(
-                    "No APPROVED recovery enrolment found for this student/course/attempt. " +
-                    "Academic must create the request first and Admin must approve it."
-            );
-        }
-
         RecoveryPlan p = new RecoveryPlan();
         p.setStudentId(studentId);
         p.setCourseCode(courseCode);
         p.setAttemptNo(attemptNo);
         p.setRecommendation(recommendation == null ? "" : recommendation.trim());
         p.setCreatedByUserId(academicUserId);
-        p.setEnrolmentId(enrolment.getEnrolmentId());
 
         long planId = planDAO.insert(p);
 

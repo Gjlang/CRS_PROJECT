@@ -12,9 +12,6 @@ public class RecoveryPlan implements Serializable {
     private long createdByUserId;
     private LocalDateTime createdAt;
 
-    // optional legacy field, can remove later
-    private Long enrolmentId;
-
     public RecoveryPlan() {
     }
 
@@ -83,13 +80,5 @@ public class RecoveryPlan implements Serializable {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
-    }
-
-    public Long getEnrolmentId() {
-        return enrolmentId;
-    }
-
-    public void setEnrolmentId(Long enrolmentId) {
-        this.enrolmentId = enrolmentId;
     }
 }

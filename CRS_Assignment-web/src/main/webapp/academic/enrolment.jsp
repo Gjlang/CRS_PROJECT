@@ -1,12 +1,12 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 <%@ taglib uri="jakarta.tags.core" prefix="c" %>
 <%
-  request.setAttribute("pageTitle", "Enrolment Request");
+  request.setAttribute("pageTitle", "Eligibility / Enrolment");
   request.setAttribute("activePage", "academic_enrolments");
 %>
 <jsp:include page="/WEB-INF/views/common/_layout_start.jsp" />
 
-<h1 class="pageTitle">Enrolment Request</h1>
+<h1 class="pageTitle">Eligibility / Enrolment</h1>
 
 <div class="card">
 
@@ -15,19 +15,20 @@
   </c:if>
 
   <div style="margin-bottom:12px; color:#555;">
-    Create a recovery enrolment request for a specific failed course attempt.
+    This module is for progression / enrolment tracking only.  
+    Recovery Plan is now handled directly from the Recovery Plan module for failed courses.
   </div>
 
   <form method="post" action="${pageContext.request.contextPath}/academic/enrolments" style="display:flex; gap:10px; flex-wrap:wrap;">
     <input name="student_id" placeholder="Student ID" required/>
     <input name="course_code" placeholder="Course Code" required/>
     <input name="attempt_no" type="number" min="1" max="3" placeholder="Attempt No" required/>
-    <button type="submit">Create Request</button>
+    <button type="submit">Create Enrolment Record</button>
   </form>
 
   <hr/>
 
-  <h3>My Requests</h3>
+  <h3>My Records</h3>
   <table border="1" cellpadding="6">
     <tr>
       <th>ID</th>
@@ -37,7 +38,6 @@
       <th>Eligibility</th>
       <th>Status</th>
       <th>Reject Reason</th>
-      <th>Action</th>
     </tr>
 
     <c:forEach var="e" items="${requests}">
@@ -49,13 +49,6 @@
         <td>${e.eligibilityStatus}</td>
         <td>${e.enrolmentStatus}</td>
         <td>${e.rejectReason}</td>
-        <td>
-          <c:if test="${e.enrolmentStatus == 'APPROVED'}">
-            <a href="${pageContext.request.contextPath}/academic/recovery_plan">
-              Recovery Plan
-            </a>
-          </c:if>
-        </td>
       </tr>
     </c:forEach>
   </table>
