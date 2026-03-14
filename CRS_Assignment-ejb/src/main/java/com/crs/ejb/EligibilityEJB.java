@@ -3,6 +3,7 @@ package com.crs.ejb;
 import com.crs.dao.StudentDAO;
 import com.crs.dao.StudentResultDAO;
 import com.crs.ejb.dto.EligibilityResult;
+import com.crs.entity.Student;
 import jakarta.ejb.Stateless;
 
 import java.sql.SQLException;
@@ -16,6 +17,7 @@ public class EligibilityEJB {
         if (studentId == null || studentId.isBlank()) {
             throw new IllegalArgumentException("studentId is required.");
         }
+
         studentId = studentId.trim();
 
         StudentDAO dao = new StudentDAO();
@@ -48,5 +50,20 @@ public class EligibilityEJB {
         r.setGrades(resultDAO.findDetailedResultsByStudent(studentId));
 
         return r;
+    }
+
+    public List<EligibilityResult> listAllNotEligibleStudents() throws SQLException {
+        StudentDAO studentDAO = new StudentDAO();
+        List<Student> students = studentDAO.findAllActiveStudents();
+        List<EligibilityResult> result = new ArrayList<>();
+
+        for (Student s : students) {
+            EligibilityResult er = checkStudent(s.getStudentId());
+            if (!er.isEligible()) {
+                result.add(er);
+            }
+        }
+
+        return result;
     }
 }

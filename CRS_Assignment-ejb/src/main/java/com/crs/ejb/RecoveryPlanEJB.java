@@ -8,6 +8,8 @@ import com.crs.entity.RecoveryPlan;
 import com.crs.entity.StudentResult;
 import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
+import com.crs.dao.StudentDAO;
+import com.crs.entity.Student;
 
 import java.sql.SQLException;
 import java.time.LocalDate;
@@ -38,10 +40,11 @@ public class RecoveryPlanEJB {
         studentId = studentId.trim().toUpperCase();
         courseCode = courseCode.trim().toUpperCase();
 
-        List<StudentResult> failedComponents = studentResultDAO.findFailedComponents(studentId, courseCode, attemptNo);
-        if (failedComponents == null || failedComponents.isEmpty()) {
-            throw new IllegalStateException("Recovery plan can only be created for a failed course attempt.");
+        List<StudentResult> recoveryComponents = studentResultDAO.findComponentsForRecovery(studentId, courseCode, attemptNo);
+        if (recoveryComponents == null || recoveryComponents.isEmpty()) {
+            throw new IllegalStateException("Recovery plan can only be created for a valid recovery course attempt.");
         }
+
 
         RecoveryPlan existing = planDAO.findByStudentCourseAttempt(studentId, courseCode, attemptNo);
         if (existing != null) {
@@ -59,11 +62,17 @@ public class RecoveryPlanEJB {
 
         try {
             if (notificationEJB != null) {
-                notificationEJB.sendMilestoneReminderEmail(
-                        "student@example.com",
-                        "Recovery plan created for " + studentId + " / " + courseCode,
-                        "Plan ID: " + planId
-                );
+            	StudentDAO studentDAO = new StudentDAO();
+            	Student student = studentDAO.findById(studentId);
+
+            	if (student != null && student.getEmail() != null && !student.getEmail().isBlank()) {
+            	    notificationEJB.sendMilestoneReminderEmail(
+            	            student.getEmail(),
+            	            "Recovery plan created for " + studentId + " / " + courseCode,
+            	            "Plan ID: " + planId
+            	    );
+            	}
+
             }
         } catch (Exception ignored) {
         }

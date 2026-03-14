@@ -384,6 +384,19 @@ public class StudentResultDAO {
 
         return list;
     }
+    
+    public List<StudentResult> findComponentsForRecovery(String studentId, String courseCode, int attemptNo) throws SQLException {
+        if (attemptNo == 2) {
+            return findFailedComponents(studentId, courseCode, 1);
+        }
+
+        if (attemptNo == 3) {
+            return findResults(studentId, courseCode, 1);
+        }
+
+        return findFailedComponents(studentId, courseCode, attemptNo);
+    }
+
 
     private StudentResult map(ResultSet rs) throws SQLException {
         return new StudentResult(

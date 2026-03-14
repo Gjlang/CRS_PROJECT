@@ -1,10 +1,15 @@
 package com.crs.web.servlet;
 
+import com.crs.dao.UserDAO;
 import com.crs.ejb.UserManagementEJB;
+import com.crs.entity.User;
 import jakarta.ejb.EJB;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.*;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
 import java.io.IOException;
 
 @WebServlet("/reset_password")
@@ -23,29 +28,34 @@ public class ResetPasswordServlet extends HttpServlet {
         String token = req.getParameter("token");
         String newPassword = req.getParameter("new_password");
 
-        HttpSession session = req.getSession(false);
-        String expected = (session == null) ? null : (String) session.getAttribute("pwResetToken");
-        Long userId = (session == null) ? null : (Long) session.getAttribute("pwResetUserId");
-
-        if (expected == null || userId == null) {
-            req.setAttribute("error", "No reset request found. Please use Forgot Password again.");
+        if (token == null || token.isBlank()) {
+            req.setAttribute("error", "Reset token is required.");
             req.getRequestDispatcher("/reset_password.jsp").forward(req, resp);
             return;
         }
-        if (token == null || !token.equals(expected)) {
-            req.setAttribute("error", "Invalid token.");
+
+        if (newPassword == null || newPassword.length() < 6) {
+            req.setAttribute("error", "New password must be at least 6 characters.");
             req.getRequestDispatcher("/reset_password.jsp").forward(req, resp);
             return;
         }
 
         try {
-            userManagementEJB.resetPassword(userId, newPassword);
+            UserDAO dao = new UserDAO();
+            User u = dao.findByResetToken(token.trim());
 
-            session.removeAttribute("pwResetToken");
-            session.removeAttribute("pwResetUserId");
+            if (u == null) {
+                req.setAttribute("error", "Invalid or expired token.");
+                req.getRequestDispatcher("/reset_password.jsp").forward(req, resp);
+                return;
+            }
+
+            userManagementEJB.resetPassword(u.getUserId(), newPassword);
+            dao.clearResetToken(u.getUserId());
 
             req.setAttribute("message", "Password reset successful. Please login.");
             req.getRequestDispatcher("/login.jsp").forward(req, resp);
+
         } catch (Exception e) {
             req.setAttribute("error", "Reset failed: " + e.getMessage());
             req.getRequestDispatcher("/reset_password.jsp").forward(req, resp);

@@ -209,33 +209,29 @@ public class AdminStudentProfileDAO {
         return list;
     }
 
-    // FIXED: no longer references rp.student_id, rp.course_code, rp.attempt_no
-    // — those columns don't exist in recovery_plans; we join through enrolments instead.
     private List<AdminStudentRecoveryPlanRow> findRecoveryPlans(String studentId) throws SQLException {
         String sql = """
             SELECT
                 rp.plan_id,
-                rp.enrolment_id,
-                e.course_code,
+                rp.student_id,
+                rp.course_code,
                 c.CourseName,
-                e.attempt_no,
+                rp.attempt_no,
                 rp.recommendation,
                 rp.created_at,
                 COUNT(m.milestone_id) AS milestone_count
             FROM recovery_plans rp
-            JOIN enrolments e
-                 ON e.enrolment_id = rp.enrolment_id
             LEFT JOIN courses c
-                 ON c.CourseID = e.course_code
+                   ON c.CourseID = rp.course_code
             LEFT JOIN milestones m
-                 ON m.plan_id = rp.plan_id
-            WHERE e.student_id = ?
+                   ON m.plan_id = rp.plan_id
+            WHERE rp.student_id = ?
             GROUP BY
                 rp.plan_id,
-                rp.enrolment_id,
-                e.course_code,
+                rp.student_id,
+                rp.course_code,
                 c.CourseName,
-                e.attempt_no,
+                rp.attempt_no,
                 rp.recommendation,
                 rp.created_at
             ORDER BY rp.created_at DESC, rp.plan_id DESC
@@ -252,13 +248,12 @@ public class AdminStudentProfileDAO {
                 while (rs.next()) {
                     AdminStudentRecoveryPlanRow row = new AdminStudentRecoveryPlanRow();
                     row.setPlanId(rs.getLong("plan_id"));
-                    row.setEnrolmentId((Long) rs.getObject("enrolment_id"));
                     row.setCourseCode(rs.getString("course_code"));
                     row.setCourseName(rs.getString("CourseName"));
                     row.setAttemptNo(rs.getInt("attempt_no"));
                     row.setRecommendation(rs.getString("recommendation"));
 
-                    Timestamp ts = rs.getTimestamp("created_at");
+                    java.sql.Timestamp ts = rs.getTimestamp("created_at");
                     if (ts != null) {
                         row.setCreatedAt(ts.toLocalDateTime());
                     }
@@ -272,14 +267,12 @@ public class AdminStudentProfileDAO {
         return list;
     }
 
-    // FIXED: joins through enrolments to get course_code and student_id filter
-    // instead of reading from recovery_plans directly (those columns no longer exist).
     private List<AdminStudentMilestoneRow> findMilestones(String studentId) throws SQLException {
         String sql = """
             SELECT
                 m.milestone_id,
                 m.plan_id,
-                e.course_code,
+                rp.course_code,
                 c.CourseName,
                 m.study_week,
                 m.title,
@@ -291,11 +284,9 @@ public class AdminStudentProfileDAO {
             FROM milestones m
             JOIN recovery_plans rp
                  ON rp.plan_id = m.plan_id
-            JOIN enrolments e
-                 ON e.enrolment_id = rp.enrolment_id
             LEFT JOIN courses c
-                 ON c.CourseID = e.course_code
-            WHERE e.student_id = ?
+                 ON c.CourseID = rp.course_code
+            WHERE rp.student_id = ?
             ORDER BY m.due_date ASC, m.milestone_id ASC
             """;
 
@@ -317,7 +308,7 @@ public class AdminStudentProfileDAO {
                     row.setTitle(rs.getString("title"));
                     row.setTask(rs.getString("task"));
 
-                    Date due = rs.getDate("due_date");
+                    java.sql.Date due = rs.getDate("due_date");
                     if (due != null) {
                         row.setDueDate(due.toLocalDate());
                     }

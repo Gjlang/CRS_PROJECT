@@ -31,6 +31,62 @@ public class EnrolmentEJB {
     private final EnrolmentDAO enrolmentDAO = new EnrolmentDAO();
     private final StudentResultDAO studentResultDAO = new StudentResultDAO();
 
+    /**
+     * Progression / next-level registration flow
+     */
+    public long createProgressionEnrolment(String studentId, String courseCode, int attemptNo, long createdByUserId) throws SQLException {
+        if (studentId == null || studentId.isBlank()) {
+            throw new IllegalArgumentException("Student ID is required.");
+        }
+        if (courseCode == null || courseCode.isBlank()) {
+            throw new IllegalArgumentException("Course code is required.");
+        }
+        if (attemptNo <= 0 || attemptNo > 3) {
+            throw new IllegalArgumentException("Attempt No must be between 1 and 3.");
+        }
+
+        final String cleanStudentId = studentId.trim().toUpperCase();
+        final String cleanCourseCode = courseCode.trim().toUpperCase();
+
+        StudentDAO studentDAO = new StudentDAO();
+        Student student = studentDAO.findById(cleanStudentId);
+        if (student == null) {
+            throw new IllegalArgumentException("Student not found: " + cleanStudentId);
+        }
+
+        EligibilityResult er = eligibilityEJB.checkStudent(cleanStudentId);
+        String eligibilityStatus = er.isEligible() ? "PASS" : "FAIL";
+
+        Enrolment existing = enrolmentDAO.findByStudentCourseAttempt(cleanStudentId, cleanCourseCode, attemptNo);
+        if (existing != null) {
+            throw new BusinessException(
+                    "An enrolment record already exists for "
+                            + cleanStudentId + " / " + cleanCourseCode + " / attempt " + attemptNo + "."
+            );
+        }
+
+        Enrolment e = new Enrolment();
+        e.setStudentId(cleanStudentId);
+        e.setCourseCode(cleanCourseCode);
+        e.setAttemptNo(attemptNo);
+        e.setEligibilityStatus(eligibilityStatus);
+        e.setEnrolmentStatus(er.isEligible() ? "APPROVED" : "PENDING");
+        e.setCreatedByUserId(createdByUserId);
+
+        long id = enrolmentDAO.createPending(e);
+
+        LOG.info(() -> "PROGRESSION_ENROLMENT_CREATED enrolmentId=" + id +
+                " studentId=" + cleanStudentId +
+                " courseCode=" + cleanCourseCode +
+                " attemptNo=" + attemptNo +
+                " eligibilityStatus=" + eligibilityStatus);
+
+        return id;
+    }
+
+    /**
+     * Recovery enrolment flow (keep for compatibility if other modules still call it)
+     */
     public long createEnrolment(String studentId, String courseCode, int attemptNo, long createdByUserId) throws SQLException {
         if (studentId == null || studentId.isBlank()) {
             throw new IllegalArgumentException("studentId is required.");
@@ -45,7 +101,6 @@ public class EnrolmentEJB {
         final String cleanStudentId = studentId.trim().toUpperCase();
         final String cleanCourseCode = courseCode.trim().toUpperCase();
 
-        // 1) Must be a failed course attempt
         List<StudentResult> failedComponents =
                 studentResultDAO.findFailedComponents(cleanStudentId, cleanCourseCode, attemptNo);
 
@@ -56,7 +111,6 @@ public class EnrolmentEJB {
             );
         }
 
-        // 2) Prevent duplicate request for same exact student-course-attempt
         Enrolment existing = enrolmentDAO.findByStudentCourseAttempt(cleanStudentId, cleanCourseCode, attemptNo);
         if (existing != null) {
             throw new BusinessException(
@@ -65,7 +119,6 @@ public class EnrolmentEJB {
             );
         }
 
-        // 3) Eligibility is informational for progression, not a hard blocker for recovery request
         EligibilityResult er = eligibilityEJB.checkStudent(cleanStudentId);
         String eligibilityStatus = er.isEligible() ? "PASS" : "FAIL";
 
@@ -78,13 +131,6 @@ public class EnrolmentEJB {
         e.setCreatedByUserId(createdByUserId);
 
         long id = enrolmentDAO.createPending(e);
-
-        LOG.info(() -> "RECOVERY_ENROLMENT_CREATED enrolmentId=" + id +
-                " studentId=" + cleanStudentId +
-                " courseCode=" + cleanCourseCode +
-                " attemptNo=" + attemptNo +
-                " eligibilityStatus=" + eligibilityStatus +
-                " createdByUserId=" + createdByUserId);
 
         if (notificationEJB != null) {
             try {
@@ -117,12 +163,15 @@ public class EnrolmentEJB {
         return enrolmentDAO.listByCreator(createdByUserId);
     }
 
+    public List<Enrolment> listAll() throws SQLException {
+        return enrolmentDAO.listByCreator(0L); // fallback, change later if you add DAO.findAll()
+    }
+
     public void approve(long enrolmentId, long adminUserId) throws SQLException {
         int updated = enrolmentDAO.approvePending(enrolmentId, adminUserId);
         if (updated == 0) {
             throw new BusinessException("Cannot approve: enrolment not found or already decided.");
         }
-        LOG.info(() -> "ENROLMENT_APPROVED enrolmentId=" + enrolmentId + " adminUserId=" + adminUserId);
     }
 
     public void reject(long enrolmentId, long adminUserId, String reason) throws SQLException {
@@ -133,8 +182,5 @@ public class EnrolmentEJB {
         if (updated == 0) {
             throw new BusinessException("Cannot reject: enrolment not found or already decided.");
         }
-        LOG.info(() -> "ENROLMENT_REJECTED enrolmentId=" + enrolmentId +
-                " adminUserId=" + adminUserId +
-                " reasonLength=" + reason.trim().length());
     }
 }

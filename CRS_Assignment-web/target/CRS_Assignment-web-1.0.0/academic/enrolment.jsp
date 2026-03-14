@@ -1,58 +1,64 @@
-<%@ page contentType="text/html;charset=UTF-8" %>
-<%@ taglib uri="jakarta.tags.core" prefix="c" %>
+<%@ page contentType="text/html; charset=UTF-8" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%
   request.setAttribute("pageTitle", "Eligibility / Enrolment");
-  request.setAttribute("activePage", "academic_enrolments");
 %>
 <jsp:include page="/WEB-INF/views/common/_layout_start.jsp" />
 
 <h1 class="pageTitle">Eligibility / Enrolment</h1>
 
 <div class="card">
-
   <c:if test="${not empty error}">
-    <div style="color:red; margin-bottom:12px;">${error}</div>
+    <div class="alert alert-danger">${error}</div>
   </c:if>
 
-  <div style="margin-bottom:12px; color:#555;">
-    This module is for progression / enrolment tracking only.  
-    Recovery Plan is now handled directly from the Recovery Plan module for failed courses.
-  </div>
+  <c:if test="${not empty message}">
+    <div class="alert alert-success">${message}</div>
+  </c:if>
 
-  <form method="post" action="${pageContext.request.contextPath}/academic/enrolments" style="display:flex; gap:10px; flex-wrap:wrap;">
-    <input name="student_id" placeholder="Student ID" required/>
-    <input name="course_code" placeholder="Course Code" required/>
-    <input name="attempt_no" type="number" min="1" max="3" placeholder="Attempt No" required/>
+  <p>This module is for progression / next-level registration only. Recovery Plan is handled in the Recovery Plan module for failed courses.</p>
+
+  <form method="post" action="${pageContext.request.contextPath}/academic/enrolment" style="margin-bottom:20px;">
+    <input name="student_id" placeholder="Student ID" required style="width:180px;" value="${param.student_id}" />
+    <input name="course_code" placeholder="Course Code" required style="width:180px;" value="${param.course_code}" />
+    <input name="attempt_no" type="number" min="1" max="3" placeholder="Attempt" required style="width:100px;" value="${param.attempt_no}" />
     <button type="submit">Create Enrolment Record</button>
   </form>
 
   <hr/>
 
   <h3>My Records</h3>
-  <table border="1" cellpadding="6">
-    <tr>
-      <th>ID</th>
-      <th>Student</th>
-      <th>Course</th>
-      <th>Attempt</th>
-      <th>Eligibility</th>
-      <th>Status</th>
-      <th>Reject Reason</th>
-    </tr>
-
-    <c:forEach var="e" items="${requests}">
+  <table border="1" cellpadding="6" cellspacing="0" style="width:100%;border-collapse:collapse;">
+    <thead>
       <tr>
-        <td>${e.enrolmentId}</td>
-        <td>${e.studentId}</td>
-        <td>${e.courseCode}</td>
-        <td>${e.attemptNo}</td>
-        <td>${e.eligibilityStatus}</td>
-        <td>${e.enrolmentStatus}</td>
-        <td>${e.rejectReason}</td>
+        <th>ID</th>
+        <th>Student</th>
+        <th>Course</th>
+        <th>Attempt</th>
+        <th>Eligibility</th>
+        <th>Status</th>
+        <th>Reject Reason</th>
       </tr>
-    </c:forEach>
+    </thead>
+    <tbody>
+      <c:forEach var="r" items="${records}">
+        <tr>
+          <td>${r.enrolmentId}</td>
+          <td>${r.studentId}</td>
+          <td>${r.courseCode}</td>
+          <td>${r.attemptNo}</td>
+          <td>${r.eligibilityStatus}</td>
+          <td>${r.enrolmentStatus}</td>
+          <td>${r.rejectReason}</td>
+        </tr>
+      </c:forEach>
+      <c:if test="${empty records}">
+        <tr>
+          <td colspan="7" style="text-align:center;">No enrolment records found.</td>
+        </tr>
+      </c:if>
+    </tbody>
   </table>
-
 </div>
 
 <jsp:include page="/WEB-INF/views/common/_layout_end.jsp" />

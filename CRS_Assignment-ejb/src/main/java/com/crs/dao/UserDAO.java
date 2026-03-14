@@ -2,6 +2,7 @@ package com.crs.dao;
 
 import com.crs.entity.User;
 import com.crs.util.DbUtil;
+
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -10,7 +11,11 @@ import java.util.List;
 public class UserDAO {
 
     public User findByEmail(String email) throws SQLException {
-        String sql = "SELECT user_id, full_name, email, password_hash, role, active, created_at FROM users WHERE email=?";
+        String sql = """
+            SELECT user_id, full_name, email, password_hash, role, active, created_at
+            FROM users
+            WHERE email=?
+            """;
         try (Connection con = DbUtil.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, email);
@@ -21,7 +26,11 @@ public class UserDAO {
     }
 
     public User findById(long id) throws SQLException {
-        String sql = "SELECT user_id, full_name, email, password_hash, role, active, created_at FROM users WHERE user_id=?";
+        String sql = """
+            SELECT user_id, full_name, email, password_hash, role, active, created_at
+            FROM users
+            WHERE user_id=?
+            """;
         try (Connection con = DbUtil.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setLong(1, id);
@@ -31,8 +40,29 @@ public class UserDAO {
         }
     }
 
+    public User findByResetToken(String token) throws SQLException {
+        String sql = """
+            SELECT user_id, full_name, email, password_hash, role, active, created_at
+            FROM users
+            WHERE reset_token = ?
+              AND reset_token_expiry IS NOT NULL
+              AND reset_token_expiry >= NOW()
+            """;
+        try (Connection con = DbUtil.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, token);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? map(rs) : null;
+            }
+        }
+    }
+
     public List<User> findAll() throws SQLException {
-        String sql = "SELECT user_id, full_name, email, password_hash, role, active, created_at FROM users ORDER BY user_id DESC";
+        String sql = """
+            SELECT user_id, full_name, email, password_hash, role, active, created_at
+            FROM users
+            ORDER BY user_id DESC
+            """;
         List<User> list = new ArrayList<>();
         try (Connection con = DbUtil.getConnection();
              PreparedStatement ps = con.prepareStatement(sql);
@@ -43,7 +73,10 @@ public class UserDAO {
     }
 
     public long create(User u) throws SQLException {
-        String sql = "INSERT INTO users(full_name,email,password_hash,role,active,created_at) VALUES(?,?,?,?,?,NOW())";
+        String sql = """
+            INSERT INTO users(full_name,email,password_hash,role,active,created_at)
+            VALUES(?,?,?,?,?,NOW())
+            """;
         try (Connection con = DbUtil.getConnection();
              PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, u.getFullName());
@@ -60,7 +93,11 @@ public class UserDAO {
     }
 
     public void update(User u) throws SQLException {
-        String sql = "UPDATE users SET full_name=?, email=?, role=?, active=? WHERE user_id=?";
+        String sql = """
+            UPDATE users
+            SET full_name=?, email=?, role=?, active=?
+            WHERE user_id=?
+            """;
         try (Connection con = DbUtil.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, u.getFullName());
@@ -91,9 +128,30 @@ public class UserDAO {
         }
     }
 
+    public void saveResetToken(long userId, String token, LocalDateTime expiry) throws SQLException {
+        String sql = "UPDATE users SET reset_token=?, reset_token_expiry=? WHERE user_id=?";
+        try (Connection con = DbUtil.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, token);
+            ps.setTimestamp(2, Timestamp.valueOf(expiry));
+            ps.setLong(3, userId);
+            ps.executeUpdate();
+        }
+    }
+
+    public void clearResetToken(long userId) throws SQLException {
+        String sql = "UPDATE users SET reset_token=NULL, reset_token_expiry=NULL WHERE user_id=?";
+        try (Connection con = DbUtil.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setLong(1, userId);
+            ps.executeUpdate();
+        }
+    }
+
     private User map(ResultSet rs) throws SQLException {
         Timestamp ts = rs.getTimestamp("created_at");
         LocalDateTime created = (ts == null) ? null : ts.toLocalDateTime();
+
         return new User(
                 rs.getLong("user_id"),
                 rs.getString("full_name"),
@@ -105,4 +163,3 @@ public class UserDAO {
         );
     }
 }
-
