@@ -8,9 +8,9 @@ import java.util.List;
 public class MilestoneDAO {
 
     // 3.3 — new: list by planId (uses title, due_date, status, remarks columns)
-    public List<Milestone> listByPlanId(long planId) throws SQLException {
-        String sql = "SELECT milestone_id, plan_id, study_week, task, title, due_date, status, grade, remarks " +
-                     "FROM milestones WHERE plan_id=? ORDER BY due_date ASC";
+	public List<Milestone> listByPlanId(long planId) throws SQLException {
+	    String sql = "SELECT milestone_id, plan_id, study_week, task, title, due_date, status, grade, remarks " +
+	                 "FROM milestones WHERE plan_id=? ORDER BY due_date ASC, milestone_id ASC";
         List<Milestone> list = new ArrayList<>();
         try (Connection con = DbUtil.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {

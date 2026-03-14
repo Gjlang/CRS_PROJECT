@@ -80,6 +80,8 @@ public class StudentDAO {
         }
         return 0.0;
     }
+    
+    
 
     public int countFailedCourses(String studentId) throws SQLException {
         String sql = """

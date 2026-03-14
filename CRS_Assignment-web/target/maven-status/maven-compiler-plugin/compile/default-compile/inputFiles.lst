@@ -9,6 +9,7 @@ C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-web\src\main\java\c
 C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-web\src\main\java\com\crs\web\servlet\AdminStudentProfileServlet.java
 C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-web\src\main\java\com\crs\web\servlet\AdminStudentsServlet.java
 C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-web\src\main\java\com\crs\web\servlet\AdminUserServlet.java
+C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-web\src\main\java\com\crs\web\servlet\CourseRecoveryDetailServlet.java
 C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-web\src\main\java\com\crs\web\servlet\ForgotPasswordServlet.java
 C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-web\src\main\java\com\crs\web\servlet\LoginServlet.java
 C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-web\src\main\java\com\crs\web\servlet\LogoutServlet.java
@@ -18,3 +19,4 @@ C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-web\src\main\java\c
 C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-web\src\main\java\com\crs\web\servlet\ReportServlet.java
 C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-web\src\main\java\com\crs\web\servlet\ResetPasswordServlet.java
 C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-web\src\main\java\com\crs\web\servlet\SelectEnrolmentServlet.java
+C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-web\src\main\java\com\crs\web\servlet\StudentRecoveryDetailServlet.java

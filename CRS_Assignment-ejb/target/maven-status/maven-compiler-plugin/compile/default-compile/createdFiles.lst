@@ -1,3 +1,4 @@
+com\crs\ejb\dto\StudentRecoverySummaryRow.class
 com\crs\ejb\dto\RecoveryCandidateRow.class
 com\crs\ejb\EnrolmentEJB.class
 com\crs\entity\Student.class

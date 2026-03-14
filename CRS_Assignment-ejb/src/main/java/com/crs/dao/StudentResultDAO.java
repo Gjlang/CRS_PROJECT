@@ -2,6 +2,7 @@ package com.crs.dao;
 
 import com.crs.ejb.dto.AdminStudentResultRow;
 import com.crs.ejb.dto.RecoveryCandidateRow;
+import com.crs.ejb.dto.StudentRecoverySummaryRow;
 import com.crs.entity.StudentResult;
 import com.crs.util.DbUtil;
 
@@ -249,6 +250,138 @@ public class StudentResultDAO {
         }
 
         System.out.println("[StudentResultDAO] findRecoveryCandidatesByKeyword count = " + list.size());
+        return list;
+    }
+
+    public List<RecoveryCandidateRow> findRecoveryCandidatesByStudent(String studentId) throws SQLException {
+        String sql = """
+            SELECT
+                r.student_id,
+                CONCAT(s.FirstName, ' ', s.LastName) AS student_name,
+                r.course_code,
+                c.CourseName,
+                r.attempt_no,
+                COUNT(*) AS failed_component_count
+            FROM student_results r
+            JOIN students s
+                 ON TRIM(UPPER(s.StudentID)) = TRIM(UPPER(r.student_id))
+            LEFT JOIN courses c
+                 ON TRIM(UPPER(c.CourseID)) = TRIM(UPPER(r.course_code))
+            WHERE TRIM(UPPER(r.student_id)) = TRIM(UPPER(?))
+              AND (
+                    r.failed = 1
+                    OR TRIM(UPPER(COALESCE(r.grade, ''))) IN ('F', 'FAIL', 'FAILED')
+              )
+            GROUP BY
+                r.student_id,
+                s.FirstName,
+                s.LastName,
+                r.course_code,
+                c.CourseName,
+                r.attempt_no
+            ORDER BY r.course_code, r.attempt_no
+            """;
+
+        List<RecoveryCandidateRow> list = new ArrayList<>();
+
+        try (Connection con = DbUtil.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setString(1, studentId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    RecoveryCandidateRow row = new RecoveryCandidateRow();
+                    row.setStudentId(rs.getString("student_id"));
+                    row.setStudentName(rs.getString("student_name"));
+                    row.setCourseCode(rs.getString("course_code"));
+                    row.setCourseName(rs.getString("CourseName"));
+                    row.setAttemptNo(rs.getInt("attempt_no"));
+                    row.setFailedComponentCount(rs.getInt("failed_component_count"));
+                    list.add(row);
+                }
+            }
+        }
+
+        return list;
+    }
+
+    public List<StudentRecoverySummaryRow> findStudentRecoverySummaries() throws SQLException {
+        String sql = """
+            SELECT
+                r.student_id,
+                CONCAT(s.FirstName, ' ', s.LastName) AS student_name,
+                COUNT(DISTINCT CONCAT(r.course_code, '-', r.attempt_no)) AS failed_courses_count
+            FROM student_results r
+            JOIN students s
+                 ON TRIM(UPPER(s.StudentID)) = TRIM(UPPER(r.student_id))
+            WHERE (
+                  r.failed = 1
+                  OR TRIM(UPPER(COALESCE(r.grade, ''))) IN ('F', 'FAIL', 'FAILED')
+            )
+            GROUP BY r.student_id, s.FirstName, s.LastName
+            ORDER BY r.student_id
+            """;
+
+        List<StudentRecoverySummaryRow> list = new ArrayList<>();
+
+        try (Connection con = DbUtil.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                StudentRecoverySummaryRow row = new StudentRecoverySummaryRow();
+                row.setStudentId(rs.getString("student_id"));
+                row.setStudentName(rs.getString("student_name"));
+                row.setFailedCoursesCount(rs.getInt("failed_courses_count"));
+                list.add(row);
+            }
+        }
+
+        return list;
+    }
+
+    public List<StudentRecoverySummaryRow> findStudentRecoverySummariesByKeyword(String keyword) throws SQLException {
+        String sql = """
+            SELECT
+                r.student_id,
+                CONCAT(s.FirstName, ' ', s.LastName) AS student_name,
+                COUNT(DISTINCT CONCAT(r.course_code, '-', r.attempt_no)) AS failed_courses_count
+            FROM student_results r
+            JOIN students s
+                 ON TRIM(UPPER(s.StudentID)) = TRIM(UPPER(r.student_id))
+            WHERE (
+                  r.failed = 1
+                  OR TRIM(UPPER(COALESCE(r.grade, ''))) IN ('F', 'FAIL', 'FAILED')
+            )
+              AND (
+                    TRIM(UPPER(r.student_id)) LIKE TRIM(UPPER(?))
+                 OR TRIM(UPPER(CONCAT(s.FirstName, ' ', s.LastName))) LIKE TRIM(UPPER(?))
+              )
+            GROUP BY r.student_id, s.FirstName, s.LastName
+            ORDER BY r.student_id
+            """;
+
+        List<StudentRecoverySummaryRow> list = new ArrayList<>();
+        String like = "%" + keyword + "%";
+
+        try (Connection con = DbUtil.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setString(1, like);
+            ps.setString(2, like);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    StudentRecoverySummaryRow row = new StudentRecoverySummaryRow();
+                    row.setStudentId(rs.getString("student_id"));
+                    row.setStudentName(rs.getString("student_name"));
+                    row.setFailedCoursesCount(rs.getInt("failed_courses_count"));
+                    list.add(row);
+                }
+            }
+        }
+
         return list;
     }
 

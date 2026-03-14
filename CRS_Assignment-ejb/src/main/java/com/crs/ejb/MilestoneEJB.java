@@ -38,11 +38,12 @@ public class MilestoneEJB {
 
         Milestone m = new Milestone();
         m.setPlanId(plan.getPlanId());
+        m.setStudyWeek(0); // important fix so insert always has a value
         m.setTitle(title.trim());
         m.setTask(task.trim());
         m.setDueDate(dueDate);
         m.setStatus("PENDING");
-        m.setRemarks(remarks);
+        m.setRemarks(remarks == null ? "" : remarks.trim());
 
         milestoneDAO.insert(m);
     }
@@ -51,6 +52,6 @@ public class MilestoneEJB {
         if (status == null || status.isBlank()) {
             status = "PENDING";
         }
-        milestoneDAO.updateStatus(milestoneId, status.trim(), remarks);
+        milestoneDAO.updateStatus(milestoneId, status.trim(), remarks == null ? "" : remarks.trim());
     }
 }
