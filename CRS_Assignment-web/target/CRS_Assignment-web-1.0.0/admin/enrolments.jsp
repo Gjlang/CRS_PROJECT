@@ -1,73 +1,53 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page contentType="text/html; charset=UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%
-  request.setAttribute("pageTitle", "Enrolment Approvals");
+    request.setAttribute("pageTitle", "Progression Registration Monitoring");
 %>
 <jsp:include page="/WEB-INF/views/common/_layout_start.jsp" />
 
-<h1 class="pageTitle">Enrolment Approvals</h1>
+<h1 class="pageTitle">Progression Registration Monitoring</h1>
 
 <div class="card">
-
-  <c:if test="${not empty message}">
-    <div style="padding:10px;background:#e7ffe7;border:1px solid #8bc48b;margin-bottom:10px;">${message}</div>
-  </c:if>
-  <c:if test="${not empty error}">
-    <div style="padding:10px;background:#ffe7e7;border:1px solid #c48b8b;margin-bottom:10px;">${error}</div>
-  </c:if>
-
-  <h3>Pending Enrolments</h3>
-  <table border="1" cellpadding="6" cellspacing="0" style="width:100%;border-collapse:collapse;">
-    <tr style="background:#f0f0f0;">
-      <th>ID</th>
-      <th>Student</th>
-      <th>Course</th>
-      <th>Attempt</th>
-      <th>Eligibility</th>
-      <th>Submitted By (User ID)</th>
-      <th>Created At</th>
-      <th>Approve</th>
-      <th>Reject</th>
-    </tr>
-    <c:forEach items="${pending}" var="e">
-      <tr>
-        <td>${e.enrolmentId}</td>
-        <td>${e.studentId}</td>
-        <td>${e.courseCode}</td>
-        <td>${e.attemptNo}</td>
-        <td>${e.eligibilityStatus}</td>
-        <td>${e.createdByUserId}</td>
-        <td>${e.createdAt}</td>
-        <td>
-          <form method="post" action="${pageContext.request.contextPath}/admin/enrolments"
-                onsubmit="return confirm('Approve enrolment #${e.enrolmentId}?');">
-            <input type="hidden" name="action" value="approve"/>
-            <input type="hidden" name="enrolment_id" value="${e.enrolmentId}"/>
-            <button type="submit" style="background:#4caf50;color:white;border:none;padding:5px 12px;cursor:pointer;border-radius:3px;">
-              Approve
-            </button>
-          </form>
-        </td>
-        <td>
-          <form method="post" action="${pageContext.request.contextPath}/admin/enrolments"
-                onsubmit="return confirm('Reject enrolment #${e.enrolmentId}?');">
-            <input type="hidden" name="action" value="reject"/>
-            <input type="hidden" name="enrolment_id" value="${e.enrolmentId}"/>
-            <input type="text" name="reason" placeholder="Reason (required)" required style="width:180px;margin-right:4px;"/>
-            <button type="submit" style="background:#e53935;color:white;border:none;padding:5px 12px;cursor:pointer;border-radius:3px;">
-              Reject
-            </button>
-          </form>
-        </td>
-      </tr>
-    </c:forEach>
-    <c:if test="${empty pending}">
-      <tr>
-        <td colspan="9" style="text-align:center;color:#888;padding:12px;">No pending enrolments.</td>
-      </tr>
+    <c:if test="${not empty error}">
+        <div class="alert alert-danger">${error}</div>
     </c:if>
-  </table>
 
+    <h3>All Progression Registrations</h3>
+
+    <table border="1" cellpadding="6" cellspacing="0" style="width:100%;border-collapse:collapse;">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Student</th>
+                <th>CGPA</th>
+                <th>Failed Courses</th>
+                <th>Eligibility</th>
+                <th>Status</th>
+                <th>Submitted By</th>
+                <th>Created At</th>
+            </tr>
+        </thead>
+        <tbody>
+            <c:forEach var="r" items="${registrations}">
+                <tr>
+                    <td>${r.registrationId}</td>
+                    <td>${r.studentId}</td>
+                    <td>${r.cgpa}</td>
+                    <td>${r.failedCourseCount}</td>
+                    <td>${r.eligibilityStatus}</td>
+                    <td>${r.registrationStatus}</td>
+                    <td>${r.createdByUserId}</td>
+                    <td>${r.createdAt}</td>
+                </tr>
+            </c:forEach>
+
+            <c:if test="${empty registrations}">
+                <tr>
+                    <td colspan="8" style="text-align:center;">No progression registrations found.</td>
+                </tr>
+            </c:if>
+        </tbody>
+    </table>
 </div>
 
 <jsp:include page="/WEB-INF/views/common/_layout_end.jsp" />

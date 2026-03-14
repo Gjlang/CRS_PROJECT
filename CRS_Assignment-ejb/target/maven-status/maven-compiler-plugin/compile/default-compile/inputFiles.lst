@@ -4,6 +4,7 @@ C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-ejb\src\main\java\c
 C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-ejb\src\main\java\com\crs\dao\EnrolmentDAO.java
 C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-ejb\src\main\java\com\crs\dao\MilestoneDAO.java
 C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-ejb\src\main\java\com\crs\dao\NotificationDAO.java
+C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-ejb\src\main\java\com\crs\dao\ProgressionRegistrationDAO.java
 C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-ejb\src\main\java\com\crs\dao\RecoveryPlanDAO.java
 C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-ejb\src\main\java\com\crs\dao\RecoverySummaryReportDAO.java
 C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-ejb\src\main\java\com\crs\dao\StudentDAO.java
@@ -29,6 +30,7 @@ C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-ejb\src\main\java\c
 C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-ejb\src\main\java\com\crs\ejb\MilestoneEJB.java
 C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-ejb\src\main\java\com\crs\ejb\NotificationEJB.java
 C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-ejb\src\main\java\com\crs\ejb\PerformanceReportEJB.java
+C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-ejb\src\main\java\com\crs\ejb\ProgressionRegistrationEJB.java
 C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-ejb\src\main\java\com\crs\ejb\RecoveryPlanEJB.java
 C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-ejb\src\main\java\com\crs\ejb\RecoverySummaryReportEJB.java
 C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-ejb\src\main\java\com\crs\ejb\UserManagementEJB.java
@@ -37,6 +39,7 @@ C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-ejb\src\main\java\c
 C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-ejb\src\main\java\com\crs\entity\Enrolment.java
 C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-ejb\src\main\java\com\crs\entity\Milestone.java
 C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-ejb\src\main\java\com\crs\entity\Notification.java
+C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-ejb\src\main\java\com\crs\entity\ProgressionRegistration.java
 C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-ejb\src\main\java\com\crs\entity\RecoveryPlan.java
 C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-ejb\src\main\java\com\crs\entity\Student.java
 C:\Users\Gjlang\eclipse-workspace\CRS_PROJECT\CRS_Assignment-ejb\src\main\java\com\crs\entity\StudentResult.java

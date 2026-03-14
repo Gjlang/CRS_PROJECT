@@ -16,13 +16,19 @@
     <div class="alert alert-success">${message}</div>
   </c:if>
 
-  <p>This module is for progression / next-level registration only. Recovery Plan is handled in the Recovery Plan module for failed courses.</p>
+  <p>
+    This module is for progression / next-level registration only.
+    The system evaluates the student using overall CGPA and total failed courses.
+    You only need to enter the Student ID.
+  </p>
 
   <form method="post" action="${pageContext.request.contextPath}/academic/enrolment" style="margin-bottom:20px;">
-    <input name="student_id" placeholder="Student ID" required style="width:180px;" value="${param.student_id}" />
-    <input name="course_code" placeholder="Course Code" required style="width:180px;" value="${param.course_code}" />
-    <input name="attempt_no" type="number" min="1" max="3" placeholder="Attempt" required style="width:100px;" value="${param.attempt_no}" />
-    <button type="submit">Create Enrolment Record</button>
+    <input name="student_id"
+           placeholder="Student ID"
+           required
+           style="width:220px;"
+           value="${param.student_id}" />
+    <button type="submit">Create Progression Registration</button>
   </form>
 
   <hr/>
@@ -33,28 +39,26 @@
       <tr>
         <th>ID</th>
         <th>Student</th>
-        <th>Course</th>
-        <th>Attempt</th>
+        <th>CGPA</th>
+        <th>Failed Courses</th>
         <th>Eligibility</th>
         <th>Status</th>
-        <th>Reject Reason</th>
       </tr>
     </thead>
     <tbody>
       <c:forEach var="r" items="${records}">
         <tr>
-          <td>${r.enrolmentId}</td>
+          <td>${r.registrationId}</td>
           <td>${r.studentId}</td>
-          <td>${r.courseCode}</td>
-          <td>${r.attemptNo}</td>
+          <td>${r.cgpa}</td>
+          <td>${r.failedCourseCount}</td>
           <td>${r.eligibilityStatus}</td>
-          <td>${r.enrolmentStatus}</td>
-          <td>${r.rejectReason}</td>
+          <td>${r.registrationStatus}</td>
         </tr>
       </c:forEach>
       <c:if test="${empty records}">
         <tr>
-          <td colspan="7" style="text-align:center;">No enrolment records found.</td>
+          <td colspan="6" style="text-align:center;">No progression registration records found.</td>
         </tr>
       </c:if>
     </tbody>

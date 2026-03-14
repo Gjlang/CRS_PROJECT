@@ -29,7 +29,7 @@
 
       <a href="<%= request.getContextPath() %>/admin/enrolments"
          class="<%= "admin_enrolments".equals(active) ? "active" : "" %>">
-        Enrolment Approvals
+        Eligibility Check
       </a>
 
       <a href="<%= request.getContextPath() %>/admin/recovery_summary"
