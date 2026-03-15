@@ -2,14 +2,14 @@ package com.crs.ejb;
 
 import com.crs.dao.MilestoneDAO;
 import com.crs.dao.RecoveryPlanDAO;
+import com.crs.dao.StudentDAO;
 import com.crs.dao.StudentResultDAO;
 import com.crs.entity.Milestone;
 import com.crs.entity.RecoveryPlan;
+import com.crs.entity.Student;
 import com.crs.entity.StudentResult;
 import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
-import com.crs.dao.StudentDAO;
-import com.crs.entity.Student;
 
 import java.sql.SQLException;
 import java.time.LocalDate;
@@ -45,7 +45,6 @@ public class RecoveryPlanEJB {
             throw new IllegalStateException("Recovery plan can only be created for a valid recovery course attempt.");
         }
 
-
         RecoveryPlan existing = planDAO.findByStudentCourseAttempt(studentId, courseCode, attemptNo);
         if (existing != null) {
             throw new IllegalStateException("Recovery plan already exists for this student/course/attempt.");
@@ -60,22 +59,7 @@ public class RecoveryPlanEJB {
 
         long planId = planDAO.insert(p);
 
-        try {
-            if (notificationEJB != null) {
-            	StudentDAO studentDAO = new StudentDAO();
-            	Student student = studentDAO.findById(studentId);
-
-            	if (student != null && student.getEmail() != null && !student.getEmail().isBlank()) {
-            	    notificationEJB.sendMilestoneReminderEmail(
-            	            student.getEmail(),
-            	            "Recovery plan created for " + studentId + " / " + courseCode,
-            	            "Plan ID: " + planId
-            	    );
-            	}
-
-            }
-        } catch (Exception ignored) {
-        }
+        notifyStudent(studentId, courseCode, attemptNo, p.getRecommendation());
 
         return planId;
     }
@@ -90,7 +74,21 @@ public class RecoveryPlanEJB {
             throw new IllegalStateException("No recovery plan exists for this student/course/attempt.");
         }
 
-        planDAO.updateRecommendation(plan.getPlanId(), recommendation == null ? "" : recommendation.trim());
+        String normalized = recommendation == null ? "" : recommendation.trim();
+        planDAO.updateRecommendation(plan.getPlanId(), normalized);
+
+        notifyStudent(studentId, courseCode, attemptNo, normalized);
+    }
+
+    public void removeRecommendation(String studentId, String courseCode, int attemptNo) throws SQLException {
+        RecoveryPlan plan = planDAO.findByStudentCourseAttempt(studentId, courseCode, attemptNo);
+        if (plan == null) {
+            throw new IllegalStateException("No recovery plan exists for this student/course/attempt.");
+        }
+
+        planDAO.updateRecommendation(plan.getPlanId(), "");
+
+        notifyStudent(studentId, courseCode, attemptNo, "");
     }
 
     public List<Milestone> listMilestones(long planId) throws SQLException {
@@ -110,20 +108,7 @@ public class RecoveryPlanEJB {
         m.setStatus("PENDING");
         m.setGrade(null);
 
-        long id = new MilestoneDAO().create(m);
-
-        try {
-            if (notificationEJB != null) {
-                notificationEJB.sendMilestoneReminderEmail(
-                        "student@example.com",
-                        "New milestone added (Plan " + planId + ")",
-                        "Week " + studyWeek + ": " + task + (dueDate != null ? (" (Due: " + dueDate + ")") : "")
-                );
-            }
-        } catch (Exception ignored) {
-        }
-
-        return id;
+        return new MilestoneDAO().create(m);
     }
 
     public void updateMilestone(Milestone m) throws SQLException {
@@ -145,5 +130,15 @@ public class RecoveryPlanEJB {
             throw new IllegalArgumentException("milestoneId invalid");
         }
         new MilestoneDAO().markDone(milestoneId, grade);
+    }
+
+    private void notifyStudent(String studentId, String courseCode, int attemptNo, String recommendation) {
+        try {
+            Student student = new StudentDAO().findById(studentId);
+            if (student != null && student.getEmail() != null && !student.getEmail().isBlank() && notificationEJB != null) {
+                notificationEJB.sendRecoveryPlanEmail(student.getEmail(), studentId, courseCode, attemptNo, recommendation);
+            }
+        } catch (Exception ignored) {
+        }
     }
 }

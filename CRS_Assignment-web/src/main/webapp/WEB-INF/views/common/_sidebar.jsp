@@ -63,11 +63,6 @@
         Recovery Plan
       </a>
 
-      <a href="<%= request.getContextPath() %>/academic/milestones"
-         class="<%= "academic_milestones".equals(active) ? "active" : "" %>">
-        Milestones
-      </a>
-
       <a href="<%= request.getContextPath() %>/academic/report"
          class="<%= "report".equals(active) ? "active" : "" %>">
         Performance Report

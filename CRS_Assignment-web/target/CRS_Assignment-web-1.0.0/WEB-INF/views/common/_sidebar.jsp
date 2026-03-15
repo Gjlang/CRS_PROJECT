@@ -29,7 +29,7 @@
 
       <a href="<%= request.getContextPath() %>/admin/enrolments"
          class="<%= "admin_enrolments".equals(active) ? "active" : "" %>">
-        Enrolment Approvals
+        Eligibility Check
       </a>
 
       <a href="<%= request.getContextPath() %>/admin/recovery_summary"
@@ -61,11 +61,6 @@
       <a href="<%= request.getContextPath() %>/academic/recovery_plan"
          class="<%= "academic_recovery_plan".equals(active) ? "active" : "" %>">
         Recovery Plan
-      </a>
-
-      <a href="<%= request.getContextPath() %>/academic/milestones"
-         class="<%= "academic_milestones".equals(active) ? "active" : "" %>">
-        Milestones
       </a>
 
       <a href="<%= request.getContextPath() %>/academic/report"

@@ -136,18 +136,24 @@ public class EnrolmentEJB {
             try {
                 Student student = new StudentDAO().findById(cleanStudentId);
                 String recipient = (student != null) ? student.getEmail() : null;
+
                 if (recipient != null && !recipient.isBlank()) {
-                    notificationEJB.sendMilestoneReminderEmail(
+                    notificationEJB.sendMilestoneEmail(
                             recipient,
-                            "Recovery enrolment request created: " + cleanStudentId + " -> " + cleanCourseCode,
-                            "Your recovery enrolment request is PENDING. Eligibility status: " + eligibilityStatus
+                            "ENROLMENT_CREATED",
+                            cleanStudentId,
+                            cleanCourseCode,
+                            attemptNo,
+                            "Recovery Enrolment Request",
+                            "PENDING",
+                            null,
+                            "Your recovery enrolment request has been created. Eligibility status: " + eligibilityStatus
                     );
                 }
             } catch (Exception ex) {
                 LOG.log(Level.WARNING, "Notification failed for enrolmentId=" + id + " (ignored)", ex);
             }
         }
-
         return id;
     }
 

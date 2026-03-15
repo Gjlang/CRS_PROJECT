@@ -56,7 +56,7 @@ public class CourseRecoveryDetailServlet extends HttpServlet {
             int attemptNo = Integer.parseInt(attemptNoStr);
 
             StudentResultDAO dao = new StudentResultDAO();
-            List<StudentResult> failedComponents = dao.findFailedComponents(studentId, courseCode, attemptNo);
+            List<StudentResult> recoveryComponents = dao.findComponentsForRecovery(studentId, courseCode, attemptNo);
             List<RecoveryCandidateRow> studentCourses = dao.findRecoveryCandidatesByStudent(studentId);
 
             RecoveryPlan plan = recoveryPlanEJB.getPlan(studentId, courseCode, attemptNo);
@@ -80,7 +80,7 @@ public class CourseRecoveryDetailServlet extends HttpServlet {
             req.setAttribute("courseCode", courseCode);
             req.setAttribute("courseName", courseName);
             req.setAttribute("attemptNo", attemptNo);
-            req.setAttribute("failedComponents", failedComponents);
+            req.setAttribute("recoveryComponents", recoveryComponents);
             req.setAttribute("plan", plan);
             req.setAttribute("milestones", milestones);
 
@@ -125,21 +125,30 @@ public class CourseRecoveryDetailServlet extends HttpServlet {
                 String recommendation = req.getParameter("recommendation");
                 recoveryPlanEJB.updateRecommendation(studentId, courseCode, attemptNo, recommendation);
 
+            } else if ("removeRecommendation".equals(action)) {
+                recoveryPlanEJB.removeRecommendation(studentId, courseCode, attemptNo);
+
             } else if ("addMilestone".equals(action)) {
                 String title = req.getParameter("title");
                 String task = req.getParameter("task");
                 String due = req.getParameter("due_date");
-                LocalDate dueDate = (due == null || due.isBlank()) ? null : LocalDate.parse(due);
                 String remarks = req.getParameter("remarks");
+
+                LocalDate dueDate = (due == null || due.isBlank()) ? null : LocalDate.parse(due);
 
                 milestoneEJB.add(studentId, courseCode, attemptNo, title, task, dueDate, remarks);
 
             } else if ("updateMilestone".equals(action)) {
                 long milestoneId = Long.parseLong(req.getParameter("milestone_id"));
                 String status = req.getParameter("status");
+                String grade = req.getParameter("grade");
                 String remarks = req.getParameter("remarks");
 
-                milestoneEJB.updateStatus(milestoneId, status, remarks);
+                milestoneEJB.updateProgress(studentId, courseCode, attemptNo, milestoneId, status, grade, remarks);
+
+            } else if ("deleteMilestone".equals(action)) {
+                long milestoneId = Long.parseLong(req.getParameter("milestone_id"));
+                milestoneEJB.deleteMilestone(studentId, courseCode, attemptNo, milestoneId);
             }
 
             String basePath = req.getServletPath().startsWith("/admin") ? "/admin" : "/academic";
