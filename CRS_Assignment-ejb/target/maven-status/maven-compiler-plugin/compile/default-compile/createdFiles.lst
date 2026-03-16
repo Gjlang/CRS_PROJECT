@@ -6,6 +6,7 @@ com\crs\util\DbUtil.class
 com\crs\ejb\MilestoneEJB.class
 com\crs\entity\Notification.class
 com\crs\ejb\AuthServiceEJB.class
+com\crs\ejb\dto\StudyContextOption.class
 com\crs\dao\StudentDAO.class
 com\crs\ejb\dto\RecoverySummaryRow.class
 com\crs\dao\ProgressionRegistrationDAO.class

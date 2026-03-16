@@ -33,14 +33,19 @@
     <label>Major</label><br/>
     <input id="student_major" type="text" readonly style="width:320px;"/><br/><br/>
 
+    <label>Available Period</label><br/>
+    <select id="study_context" style="width:320px;">
+      <option value="">-- Select available period --</option>
+    </select><br/><br/>
+
     <label>Semester</label><br/>
-    <input id="semester" name="semester" type="number" min="1" max="3" value="1" required style="width:80px;"/><br/><br/>
+    <input id="semester" name="semester" type="number" min="1" max="3" value="1" required readonly style="width:80px;background:#f5f5f5;"/><br/><br/>
 
     <label>Year</label><br/>
-    <input id="year" name="year" type="number" value="2026" required style="width:100px;"/><br/><br/>
+    <input id="year" name="year" type="number" value="2026" required readonly style="width:100px;background:#f5f5f5;"/><br/><br/>
 
     <label>Year of Study</label><br/>
-    <input id="year_of_study" name="year_of_study" type="number" min="1" max="4" value="1" required style="width:80px;"/><br/><br/>
+    <input id="year_of_study" name="year_of_study" type="number" min="1" max="4" value="1" required readonly style="width:80px;background:#f5f5f5;"/><br/><br/>
 
     <label>Email report to (optional)</label><br/>
     <input name="email_to" type="email" style="width:320px;"/><br/><br/>
@@ -85,13 +90,52 @@
   const semesterInput = document.getElementById('semester');
   const yearInput = document.getElementById('year');
   const yosInput = document.getElementById('year_of_study');
+  const contextSelect = document.getElementById('study_context');
+
+  function clearStudentFields() {
+    nameInput.value = '';
+    majorInput.value = '';
+    semesterInput.value = '';
+    yearInput.value = '';
+    yosInput.value = '';
+    contextSelect.innerHTML = '<option value="">-- Select available period --</option>';
+  }
+
+  function setStudyContext(semester, year, yearOfStudy) {
+    semesterInput.value = semester || '';
+    yearInput.value = year || '';
+    yosInput.value = yearOfStudy || '';
+  }
+
+  function populateContextDropdown(contexts, latestSemester, latestYear, latestYearOfStudy) {
+    contextSelect.innerHTML = '<option value="">-- Select available period --</option>';
+
+    if (!contexts || contexts.length === 0) {
+      return;
+    }
+
+    contexts.forEach(ctx => {
+      const option = document.createElement('option');
+      option.value = ctx.semester + '|' + ctx.year + '|' + ctx.yearOfStudy;
+      option.textContent = 'Semester ' + ctx.semester + ' / Year ' + ctx.year + ' / Year of Study ' + ctx.yearOfStudy;
+
+      if (
+        Number(ctx.semester) === Number(latestSemester) &&
+        Number(ctx.year) === Number(latestYear) &&
+        Number(ctx.yearOfStudy) === Number(latestYearOfStudy)
+      ) {
+        option.selected = true;
+      }
+
+      contextSelect.appendChild(option);
+    });
+  }
 
   async function lookupStudent() {
     const studentId = studentIdInput.value.trim();
 
     if (!studentId) {
-      nameInput.value = '';
-      majorInput.value = '';
+      clearStudentFields();
       return;
     }
 
@@ -99,28 +143,39 @@
       const res = await fetch('${pageContext.request.contextPath}/academic/report?lookup_student_id=' + encodeURIComponent(studentId));
 
       if (!res.ok) {
-        nameInput.value = '';
-        majorInput.value = '';
+        clearStudentFields();
         return;
       }
 
       const data = await res.json();
 
       if (!data.found) {
-        nameInput.value = '';
-        majorInput.value = '';
+        clearStudentFields();
         return;
       }
 
       nameInput.value = data.studentName || '';
       majorInput.value = data.major || '';
-      semesterInput.value = data.semester || '';
-      yearInput.value = data.year || '';
-      yosInput.value = data.yearOfStudy || '';
+
+      setStudyContext(data.semester, data.year, data.yearOfStudy);
+      populateContextDropdown(data.contexts, data.semester, data.year, data.yearOfStudy);
     } catch (e) {
       console.error(e);
+      clearStudentFields();
     }
   }
+
+  contextSelect.addEventListener('change', function() {
+    const value = contextSelect.value;
+    if (!value) {
+      return;
+    }
+
+    const parts = value.split('|');
+    if (parts.length === 3) {
+      setStudyContext(parts[0], parts[1], parts[2]);
+    }
+  });
 
   studentIdInput.addEventListener('change', lookupStudent);
   studentIdInput.addEventListener('blur', lookupStudent);

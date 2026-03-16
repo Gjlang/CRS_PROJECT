@@ -5,6 +5,7 @@ import com.crs.dao.StudentResultDAO;
 import com.crs.ejb.NotificationEJB;
 import com.crs.ejb.PerformanceReportEJB;
 import com.crs.ejb.dto.ReportData;
+import com.crs.ejb.dto.StudyContextOption;
 import com.crs.entity.Student;
 import com.crs.entity.StudentResult;
 import jakarta.ejb.EJB;
@@ -13,6 +14,7 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 
 import java.io.IOException;
+import java.util.List;
 
 @WebServlet("/academic/report")
 public class ReportServlet extends HttpServlet {
@@ -89,10 +91,25 @@ public class ReportServlet extends HttpServlet {
             }
 
             StudentResult latest = resultDAO.findLatestStudyContext(studentId);
+            List<StudyContextOption> contexts = resultDAO.findAvailableStudyContexts(studentId);
 
             int semester = (latest != null) ? latest.getSemester() : 1;
             int year = (latest != null) ? latest.getYear() : 2026;
             int yearOfStudy = (latest != null) ? latest.getYearOfStudy() : s.getYear();
+
+            StringBuilder contextsJson = new StringBuilder("[");
+            for (int i = 0; i < contexts.size(); i++) {
+                StudyContextOption ctx = contexts.get(i);
+                if (i > 0) {
+                    contextsJson.append(",");
+                }
+                contextsJson.append("{")
+                        .append("\"semester\":").append(ctx.getSemester()).append(",")
+                        .append("\"year\":").append(ctx.getYear()).append(",")
+                        .append("\"yearOfStudy\":").append(ctx.getYearOfStudy())
+                        .append("}");
+            }
+            contextsJson.append("]");
 
             String json = "{"
                     + "\"found\":true,"
@@ -101,7 +118,8 @@ public class ReportServlet extends HttpServlet {
                     + "\"major\":\"" + escapeJson(s.getMajor()) + "\","
                     + "\"semester\":" + semester + ","
                     + "\"year\":" + year + ","
-                    + "\"yearOfStudy\":" + yearOfStudy
+                    + "\"yearOfStudy\":" + yearOfStudy + ","
+                    + "\"contexts\":" + contextsJson
                     + "}";
 
             resp.getWriter().write(json);

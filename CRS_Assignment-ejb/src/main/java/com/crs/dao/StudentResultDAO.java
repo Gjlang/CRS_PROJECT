@@ -9,7 +9,7 @@ import com.crs.util.DbUtil;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-
+import com.crs.ejb.dto.StudyContextOption;
 public class StudentResultDAO {
 
     public List<StudentResult> findResults(String studentId, String courseCode, int attemptNo) throws SQLException {
@@ -138,6 +138,34 @@ public class StudentResultDAO {
                 return rs.next() ? map(rs) : null;
             }
         }
+    }
+    
+    public List<StudyContextOption> findAvailableStudyContexts(String studentId) throws SQLException {
+        String sql = """
+            SELECT DISTINCT semester, year, year_of_study
+            FROM student_results
+            WHERE student_id = ?
+            ORDER BY year DESC, semester DESC, year_of_study DESC
+            """;
+
+        List<StudyContextOption> list = new ArrayList<>();
+
+        try (Connection con = DbUtil.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, studentId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    StudyContextOption option = new StudyContextOption();
+                    option.setSemester(rs.getInt("semester"));
+                    option.setYear(rs.getInt("year"));
+                    option.setYearOfStudy(rs.getInt("year_of_study"));
+                    list.add(option);
+                }
+            }
+        }
+
+        return list;
     }
 
     public List<RecoveryCandidateRow> findAllRecoveryCandidates() throws SQLException {
