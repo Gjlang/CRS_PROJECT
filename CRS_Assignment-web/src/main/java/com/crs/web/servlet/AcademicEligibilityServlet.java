@@ -1,6 +1,8 @@
 package com.crs.web.servlet;
 
+import com.crs.dao.StudentResultDAO;
 import com.crs.ejb.EligibilityEJB;
+import com.crs.ejb.dto.AdminStudentResultRow;
 import com.crs.ejb.dto.EligibilityResult;
 import jakarta.ejb.EJB;
 import jakarta.servlet.ServletException;
@@ -47,6 +49,14 @@ public class AcademicEligibilityServlet extends HttpServlet {
             req.setAttribute("result", singleResult);
             req.setAttribute("studentId", studentId.trim());
             req.setAttribute("activePage", "academic_eligibility");
+
+            try {
+                List<AdminStudentResultRow> detailedResults =
+                        new StudentResultDAO().findDetailedResultsByStudent(studentId.trim());
+                req.setAttribute("detailedResults", detailedResults);
+            } catch (Exception e) {
+                req.setAttribute("detailedResults", java.util.List.of());
+            }
 
             req.getRequestDispatcher("/academic/eligibility.jsp").forward(req, resp);
 

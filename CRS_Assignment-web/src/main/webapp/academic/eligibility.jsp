@@ -46,39 +46,56 @@
           <li>${reason}</li>
         </c:forEach>
       </ul>
+
+      <h4>Supporting Academic Result Details</h4>
+      <table border="1" cellpadding="6" cellspacing="0" style="width:100%;border-collapse:collapse;margin-top:12px;">
+        <thead>
+          <tr>
+            <th>Course Code</th>
+            <th>Course Name</th>
+            <th>Assessment Component</th>
+            <th>Grade</th>
+            <th>Grade Point</th>
+            <th>Failed</th>
+            <th>Attempt No</th>
+            <th>Semester</th>
+            <th>Year</th>
+            <th>Year of Study</th>
+          </tr>
+        </thead>
+        <tbody>
+          <c:choose>
+            <c:when test="${not empty detailedResults}">
+              <c:forEach var="row" items="${detailedResults}">
+                <tr>
+                  <td>${row.courseCode}</td>
+                  <td>${row.courseName}</td>
+                  <td>${row.assessmentComponent}</td>
+                  <td>${row.grade}</td>
+                  <td>${row.gradePoint}</td>
+                  <td>
+                    <c:choose>
+                      <c:when test="${row.failed}">Yes</c:when>
+                      <c:otherwise>No</c:otherwise>
+                    </c:choose>
+                  </td>
+                  <td>${row.attemptNo}</td>
+                  <td>${row.semester}</td>
+                  <td>${row.year}</td>
+                  <td>${row.yearOfStudy}</td>
+                </tr>
+              </c:forEach>
+            </c:when>
+            <c:otherwise>
+              <tr>
+                <td colspan="10" style="text-align:center;">No academic result details found.</td>
+              </tr>
+            </c:otherwise>
+          </c:choose>
+        </tbody>
+      </table>
     </div>
   </c:if>
-
-  <h3>Students Not Eligible to Progress</h3>
-  <table border="1" cellpadding="6" cellspacing="0" style="width:100%;border-collapse:collapse;margin-bottom:24px;">
-    <thead>
-      <tr>
-        <th>Student ID</th>
-        <th>CGPA</th>
-        <th>Failed Courses</th>
-        <th>Reasons</th>
-      </tr>
-    </thead>
-    <tbody>
-      <c:forEach var="r" items="${notEligibleList}">
-        <tr>
-          <td>${r.studentId}</td>
-          <td>${r.cgpa}</td>
-          <td>${r.failedCourseCount}</td>
-          <td>
-            <c:forEach var="reason" items="${r.reasons}">
-              <div>${reason}</div>
-            </c:forEach>
-          </td>
-        </tr>
-      </c:forEach>
-      <c:if test="${empty notEligibleList}">
-        <tr>
-          <td colspan="4" style="text-align:center;">No ineligible students found.</td>
-        </tr>
-      </c:if>
-    </tbody>
-  </table>
 </div>
 
 <jsp:include page="/WEB-INF/views/common/_layout_end.jsp" />
