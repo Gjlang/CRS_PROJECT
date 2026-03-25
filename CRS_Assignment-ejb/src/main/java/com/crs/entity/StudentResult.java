@@ -15,6 +15,9 @@ public class StudentResult implements Serializable {
     private int year;
     private int yearOfStudy;
 
+    // added for full table support
+    private Long enrolmentId;
+
     public StudentResult() {}
 
     public StudentResult(long resultId, String studentId, String courseCode, long assessmentId, int attemptNo,
@@ -65,9 +68,23 @@ public class StudentResult implements Serializable {
     public int getYearOfStudy() { return yearOfStudy; }
     public void setYearOfStudy(int yearOfStudy) { this.yearOfStudy = yearOfStudy; }
 
-    @Override public String toString() {
-        return "StudentResult{studentId='" + studentId + "', courseCode='" + courseCode + "', assessmentId=" + assessmentId +
-                ", attemptNo=" + attemptNo + ", grade='" + grade + "', gradePoint=" + gradePoint + ", failed=" + failed + "}";
+    public Long getEnrolmentId() { return enrolmentId; }
+    public void setEnrolmentId(Long enrolmentId) { this.enrolmentId = enrolmentId; }
+
+    @Override
+    public String toString() {
+        return "StudentResult{resultId=" + resultId +
+                ", studentId='" + studentId + '\'' +
+                ", courseCode='" + courseCode + '\'' +
+                ", assessmentId=" + assessmentId +
+                ", attemptNo=" + attemptNo +
+                ", grade='" + grade + '\'' +
+                ", gradePoint=" + gradePoint +
+                ", failed=" + failed +
+                ", semester=" + semester +
+                ", year=" + year +
+                ", yearOfStudy=" + yearOfStudy +
+                ", enrolmentId=" + enrolmentId +
+                '}';
     }
 }
-

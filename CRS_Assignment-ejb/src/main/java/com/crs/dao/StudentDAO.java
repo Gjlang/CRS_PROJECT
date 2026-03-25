@@ -127,6 +127,27 @@ public class StudentDAO {
 
         return list;
     }
+    
+    public List<Student> findAll() throws SQLException {
+        String sql = """
+            SELECT StudentID, FirstName, LastName, Major, Year, Email, active
+            FROM students
+            ORDER BY StudentID
+            """;
+
+        List<Student> list = new ArrayList<>();
+
+        try (Connection con = DbUtil.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                list.add(map(rs));
+            }
+        }
+
+        return list;
+    }
 
 
     private Student map(ResultSet rs) throws SQLException {

@@ -16,8 +16,6 @@ public class AuthServiceEJB {
         String stored = u.getPasswordHash();
         if (stored == null) return null;
 
-        // If stored looks like "salt:hash" format → verify using PasswordUtil
-        // Otherwise fallback to plain text compare (for demo/seeded data)
         if (stored.contains(":")) {
             if (!PasswordUtil.verify(plainPassword, stored)) return null;
         } else {

@@ -189,6 +189,28 @@ public class EnrolmentDAO {
             }
         }
     }
+    
+    public List<Enrolment> findAll() throws SQLException {
+        String sql = """
+            SELECT enrolment_id, student_id, course_code, attempt_no, eligibility_status,
+                   enrolment_status, created_by_user_id, decided_by_user_id,
+                   decided_at, reject_reason, created_at
+            FROM enrolments
+            ORDER BY enrolment_id DESC
+            """;
+
+        List<Enrolment> list = new ArrayList<>();
+
+        try (Connection con = DbUtil.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                list.add(map(rs));
+            }
+        }
+
+        return list;
+    }
 
     @Deprecated
     public void approve(long enrolmentId) throws SQLException {

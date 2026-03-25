@@ -141,6 +141,26 @@ public class MilestoneDAO {
             ps.executeUpdate();
         }
     }
+    
+    public List<Milestone> findAll() throws SQLException {
+        String sql = """
+            SELECT milestone_id, plan_id, study_week, task, title, due_date, status, grade, remarks
+            FROM milestones
+            ORDER BY milestone_id DESC
+            """;
+
+        List<Milestone> list = new ArrayList<>();
+
+        try (Connection con = DbUtil.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                list.add(map(rs));
+            }
+        }
+
+        return list;
+    }
 
     private Milestone map(ResultSet rs) throws SQLException {
         Date d = rs.getDate("due_date");

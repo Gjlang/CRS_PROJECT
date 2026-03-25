@@ -51,10 +51,13 @@ public class ReportServlet extends HttpServlet {
             req.setAttribute("report", data);
 
             if (emailTo != null && !emailTo.isBlank() && notificationEJB != null) {
-                String body = "Report for " + data.getStudentName() + " (" + data.getStudentId() + ")\n"
-                        + "Major: " + data.getMajor() + "\n"
-                        + "Semester " + semester + ", Year " + year + ", Year of Study " + yos + "\n"
-                        + "CGPA: " + String.format("%.2f", data.getCgpa());
+            	String body = "Report for " + data.getStudentName() + " (" + data.getStudentId() + ")\n"
+            	        + "Major: " + data.getMajor() + "\n"
+            	        + "Semester " + semester + ", Year " + year + ", Year of Study " + yos + "\n"
+            	        + "CGPA: " + String.format("%.2f", data.getCgpa()) + "\n"
+            	        + "Weak / Failed Courses: " + data.getWeakCoursesSummary() + "\n"
+            	        + "Recommendation: " + data.getImprovementRecommendation() + "\n"
+            	        + "Suggested Recovery Action: " + data.getSuggestedRecoveryAction();
 
                 notificationEJB.sendReportEmail(emailTo.trim(), body);
                 req.setAttribute("message", "Report emailed (check notifications table if SMTP not set).");

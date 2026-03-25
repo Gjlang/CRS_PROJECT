@@ -55,6 +55,26 @@ public class AssessmentDAO {
             ps.executeUpdate();
         }
     }
+    
+    public List<Assessment> findAll() throws SQLException {
+        String sql = """
+            SELECT assessment_id, course_code, component_name, weight_percent
+            FROM assessments
+            ORDER BY assessment_id DESC
+            """;
+
+        List<Assessment> list = new ArrayList<>();
+
+        try (Connection con = DbUtil.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                list.add(map(rs));
+            }
+        }
+
+        return list;
+    }
 
     private Assessment map(ResultSet rs) throws SQLException {
         return new Assessment(

@@ -1,12 +1,14 @@
 package com.crs.dao;
 
 import com.crs.ejb.dto.AdminStudentResultRow;
+
 import com.crs.ejb.dto.RecoveryCandidateRow;
 import com.crs.ejb.dto.StudentRecoverySummaryRow;
 import com.crs.entity.StudentResult;
 import com.crs.util.DbUtil;
 
 import java.sql.*;
+import com.crs.entity.Assessment;
 import java.util.ArrayList;
 import java.util.List;
 import com.crs.ejb.dto.StudyContextOption;
@@ -162,6 +164,27 @@ public class StudentResultDAO {
                     option.setYearOfStudy(rs.getInt("year_of_study"));
                     list.add(option);
                 }
+            }
+        }
+
+        return list;
+    }
+    
+    public List<StudentResult> findAll() throws SQLException {
+        String sql = """
+            SELECT result_id, student_id, course_code, assessment_id, attempt_no,
+                   grade, grade_point, failed, semester, year, year_of_study, enrolment_id
+            FROM student_results
+            ORDER BY result_id DESC
+            """;
+
+        List<StudentResult> list = new ArrayList<>();
+
+        try (Connection con = DbUtil.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                list.add(map(rs));
             }
         }
 
@@ -419,15 +442,82 @@ public class StudentResultDAO {
         }
 
         if (attemptNo == 3) {
-            return findResults(studentId, courseCode, 1);
+            return findAllComponentsForThirdAttempt(studentId, courseCode, attemptNo);
         }
 
         return findFailedComponents(studentId, courseCode, attemptNo);
     }
+    
+    private List<StudentResult> findAllComponentsForThirdAttempt(String studentId, String courseCode, int currentAttemptNo) throws SQLException {
+        List<StudentResult> list = new ArrayList<>();
+
+        AssessmentDAO assessmentDAO = new AssessmentDAO();
+        List<Assessment> assessments = assessmentDAO.findByCourse(courseCode);
+
+        for (Assessment assessment : assessments) {
+            StudentResult latest = findLatestResultForAssessmentBeforeAttempt(
+                    studentId,
+                    courseCode,
+                    assessment.getAssessmentId(),
+                    currentAttemptNo
+            );
+
+            if (latest != null) {
+                latest.setAttemptNo(currentAttemptNo); // display as current recovery attempt
+                list.add(latest);
+            } else {
+                StudentResult placeholder = new StudentResult();
+                placeholder.setStudentId(studentId);
+                placeholder.setCourseCode(courseCode);
+                placeholder.setAssessmentId(assessment.getAssessmentId());
+                placeholder.setAttemptNo(currentAttemptNo);
+                placeholder.setGrade("N/A");
+                placeholder.setGradePoint(0.0);
+                placeholder.setFailed(false);
+                placeholder.setSemester(0);
+                placeholder.setYear(0);
+                placeholder.setYearOfStudy(0);
+                list.add(placeholder);
+            }
+        }
+
+        return list;
+    }
+
+    private StudentResult findLatestResultForAssessmentBeforeAttempt(
+            String studentId,
+            String courseCode,
+            long assessmentId,
+            int currentAttemptNo
+    ) throws SQLException {
+        String sql = """
+            SELECT *
+            FROM student_results
+            WHERE student_id = ?
+              AND course_code = ?
+              AND assessment_id = ?
+              AND attempt_no < ?
+            ORDER BY attempt_no DESC, result_id DESC
+            LIMIT 1
+            """;
+
+        try (Connection con = DbUtil.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setString(1, studentId);
+            ps.setString(2, courseCode);
+            ps.setLong(3, assessmentId);
+            ps.setInt(4, currentAttemptNo);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? map(rs) : null;
+            }
+        }
+    }
 
 
     private StudentResult map(ResultSet rs) throws SQLException {
-        return new StudentResult(
+        StudentResult result = new StudentResult(
                 rs.getLong("result_id"),
                 rs.getString("student_id"),
                 rs.getString("course_code"),
@@ -440,5 +530,8 @@ public class StudentResultDAO {
                 rs.getInt("year"),
                 rs.getInt("year_of_study")
         );
+
+        result.setEnrolmentId((Long) rs.getObject("enrolment_id"));
+        return result;
     }
 }

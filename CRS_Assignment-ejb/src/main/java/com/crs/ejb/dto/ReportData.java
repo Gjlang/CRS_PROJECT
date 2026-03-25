@@ -14,6 +14,10 @@ public class ReportData implements Serializable {
     private List<ReportCourseRow> rows = new ArrayList<>();
     private double cgpa;
 
+    private String weakCoursesSummary;
+    private String improvementRecommendation;
+    private String suggestedRecoveryAction;
+
     public String getStudentId() { return studentId; }
     public void setStudentId(String studentId) { this.studentId = studentId; }
 
@@ -37,4 +41,13 @@ public class ReportData implements Serializable {
 
     public double getCgpa() { return cgpa; }
     public void setCgpa(double cgpa) { this.cgpa = cgpa; }
+
+    public String getWeakCoursesSummary() { return weakCoursesSummary; }
+    public void setWeakCoursesSummary(String weakCoursesSummary) { this.weakCoursesSummary = weakCoursesSummary; }
+
+    public String getImprovementRecommendation() { return improvementRecommendation; }
+    public void setImprovementRecommendation(String improvementRecommendation) { this.improvementRecommendation = improvementRecommendation; }
+
+    public String getSuggestedRecoveryAction() { return suggestedRecoveryAction; }
+    public void setSuggestedRecoveryAction(String suggestedRecoveryAction) { this.suggestedRecoveryAction = suggestedRecoveryAction; }
 }

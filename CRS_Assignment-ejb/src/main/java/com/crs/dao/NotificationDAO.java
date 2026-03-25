@@ -33,6 +33,26 @@ public class NotificationDAO {
             ps.executeUpdate();
         }
     }
+    
+    public List<Notification> findAll() throws SQLException {
+        String sql = """
+            SELECT notification_id, recipient_email, subject, body, type, status, created_at, error_message
+            FROM notifications
+            ORDER BY notification_id DESC
+            """;
+
+        List<Notification> list = new ArrayList<>();
+
+        try (Connection con = DbUtil.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                list.add(map(rs));
+            }
+        }
+
+        return list;
+    }
 
     public void markFailed(long notificationId, String errorMessage) throws SQLException {
         String sql = "UPDATE notifications SET status='FAILED', error_message=? WHERE notification_id=?";

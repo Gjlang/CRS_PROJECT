@@ -78,6 +78,12 @@
     </table>
 
     <p><b>CGPA:</b> ${report.cgpa}</p>
+
+	<div style="margin-top:15px; padding:12px; border:1px solid #ddd; background:#fafafa;">
+	  <p><b>Weak / Failed Courses:</b> ${report.weakCoursesSummary}</p>
+	  <p><b>Recommendation for Improvement:</b> ${report.improvementRecommendation}</p>
+	  <p><b>Suggested Recovery Action:</b> ${report.suggestedRecoveryAction}</p>
+	</div>
   </c:if>
 
 </div>

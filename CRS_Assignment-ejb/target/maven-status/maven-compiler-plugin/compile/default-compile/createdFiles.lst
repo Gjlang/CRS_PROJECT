@@ -4,6 +4,7 @@ com\crs\dao\CourseDAO.class
 com\crs\util\EmailUtil.class
 com\crs\util\DbUtil.class
 com\crs\ejb\MilestoneEJB.class
+com\crs\ejb\AdminDashboardEJB.class
 com\crs\entity\Notification.class
 com\crs\ejb\AuthServiceEJB.class
 com\crs\ejb\dto\StudyContextOption.class

@@ -12,7 +12,7 @@ public class UserDAO {
 
     public User findByEmail(String email) throws SQLException {
         String sql = """
-            SELECT user_id, full_name, email, password_hash, role, active, created_at
+            SELECT user_id, full_name, email, password_hash, role, active, created_at, reset_token, reset_token_expiry
             FROM users
             WHERE email=?
             """;
@@ -27,7 +27,7 @@ public class UserDAO {
 
     public User findById(long id) throws SQLException {
         String sql = """
-            SELECT user_id, full_name, email, password_hash, role, active, created_at
+            SELECT user_id, full_name, email, password_hash, role, active, created_at, reset_token, reset_token_expiry
             FROM users
             WHERE user_id=?
             """;
@@ -42,7 +42,7 @@ public class UserDAO {
 
     public User findByResetToken(String token) throws SQLException {
         String sql = """
-            SELECT user_id, full_name, email, password_hash, role, active, created_at
+            SELECT user_id, full_name, email, password_hash, role, active, created_at, reset_token, reset_token_expiry
             FROM users
             WHERE reset_token = ?
               AND reset_token_expiry IS NOT NULL
@@ -59,7 +59,7 @@ public class UserDAO {
 
     public List<User> findAll() throws SQLException {
         String sql = """
-            SELECT user_id, full_name, email, password_hash, role, active, created_at
+            SELECT user_id, full_name, email, password_hash, role, active, created_at, reset_token, reset_token_expiry
             FROM users
             ORDER BY user_id DESC
             """;
@@ -149,17 +149,22 @@ public class UserDAO {
     }
 
     private User map(ResultSet rs) throws SQLException {
-        Timestamp ts = rs.getTimestamp("created_at");
-        LocalDateTime created = (ts == null) ? null : ts.toLocalDateTime();
+        Timestamp createdTs = rs.getTimestamp("created_at");
+        Timestamp expiryTs = rs.getTimestamp("reset_token_expiry");
 
-        return new User(
+        User u = new User(
                 rs.getLong("user_id"),
                 rs.getString("full_name"),
                 rs.getString("email"),
                 rs.getString("password_hash"),
                 rs.getString("role"),
                 rs.getBoolean("active"),
-                created
+                createdTs == null ? null : createdTs.toLocalDateTime()
         );
+
+        u.setResetToken(rs.getString("reset_token"));
+        u.setResetTokenExpiry(expiryTs == null ? null : expiryTs.toLocalDateTime());
+
+        return u;
     }
 }

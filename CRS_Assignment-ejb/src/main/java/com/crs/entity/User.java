@@ -7,10 +7,14 @@ public class User implements Serializable {
     private long userId;
     private String fullName;
     private String email;
-    private String passwordHash; // stored salted hash
-    private String role; // COURSE_ADMIN or ACADEMIC_OFFICER
+    private String passwordHash;
+    private String role;
     private boolean active;
     private LocalDateTime createdAt;
+
+    // added for dashboard/full table support
+    private String resetToken;
+    private LocalDateTime resetTokenExpiry;
 
     public User() {}
 
@@ -45,8 +49,21 @@ public class User implements Serializable {
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
-    @Override public String toString() {
-        return "User{userId=" + userId + ", fullName='" + fullName + "', email='" + email + "', role='" + role + "', active=" + active + "}";
+    public String getResetToken() { return resetToken; }
+    public void setResetToken(String resetToken) { this.resetToken = resetToken; }
+
+    public LocalDateTime getResetTokenExpiry() { return resetTokenExpiry; }
+    public void setResetTokenExpiry(LocalDateTime resetTokenExpiry) { this.resetTokenExpiry = resetTokenExpiry; }
+
+    @Override
+    public String toString() {
+        return "User{userId=" + userId +
+                ", fullName='" + fullName + '\'' +
+                ", email='" + email + '\'' +
+                ", role='" + role + '\'' +
+                ", active=" + active +
+                ", resetToken='" + resetToken + '\'' +
+                ", resetTokenExpiry=" + resetTokenExpiry +
+                '}';
     }
 }
-

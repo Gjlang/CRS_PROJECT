@@ -1,6 +1,8 @@
 package com.crs.dao;
 
 import com.crs.entity.RecoveryPlan;
+import java.util.ArrayList;
+import java.util.List;
 import com.crs.util.DbUtil;
 
 import java.sql.*;
@@ -57,6 +59,27 @@ public class RecoveryPlanDAO {
                 throw new SQLException("Insert succeeded but no generated plan_id returned.");
             }
         }
+    }
+    
+    public List<RecoveryPlan> findAll() throws SQLException {
+        String sql = """
+            SELECT plan_id, student_id, course_code, attempt_no, recommendation,
+                   created_by_user_id, created_at
+            FROM recovery_plans
+            ORDER BY plan_id DESC
+            """;
+
+        List<RecoveryPlan> list = new ArrayList<>();
+
+        try (Connection con = DbUtil.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                list.add(map(rs));
+            }
+        }
+
+        return list;
     }
 
     public void updateRecommendation(long planId, String recommendation) throws SQLException {
