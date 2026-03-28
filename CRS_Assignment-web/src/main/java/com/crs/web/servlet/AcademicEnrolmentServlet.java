@@ -16,6 +16,8 @@ public class AcademicEnrolmentServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        req.setAttribute("activePage", "academic_enrolments");
+
         try {
             Object userIdObj = req.getSession().getAttribute("userId");
             if (userIdObj == null) {
@@ -53,17 +55,17 @@ public class AcademicEnrolmentServlet extends HttpServlet {
             }
 
             long userId = ((Number) userIdObj).longValue();
-
             long id = registrationEJB.createRegistration(studentId.trim(), userId);
 
             req.getSession().setAttribute(
-                    "successMessage",
-                    "Progression registration created successfully. ID: " + id
+                "successMessage",
+                "Progression registration request submitted successfully. Request ID: " + id + ". Waiting for admin approval."
             );
 
             resp.sendRedirect(req.getContextPath() + "/academic/enrolment");
 
         } catch (Exception e) {
+            req.setAttribute("activePage", "academic_enrolments");
             req.setAttribute("error", "Create progression registration failed: " + e.getMessage());
 
             try {

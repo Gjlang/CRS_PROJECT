@@ -13,6 +13,10 @@ public class ProgressionRegistration {
     private long createdByUserId;
     private LocalDateTime createdAt;
 
+    private Long decidedByUserId;
+    private LocalDateTime decidedAt;
+    private String rejectReason;
+
     public long getRegistrationId() {
         return registrationId;
     }
@@ -75,5 +79,29 @@ public class ProgressionRegistration {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public Long getDecidedByUserId() {
+        return decidedByUserId;
+    }
+
+    public void setDecidedByUserId(Long decidedByUserId) {
+        this.decidedByUserId = decidedByUserId;
+    }
+
+    public LocalDateTime getDecidedAt() {
+        return decidedAt;
+    }
+
+    public void setDecidedAt(LocalDateTime decidedAt) {
+        this.decidedAt = decidedAt;
+    }
+
+    public String getRejectReason() {
+        return rejectReason;
+    }
+
+    public void setRejectReason(String rejectReason) {
+        this.rejectReason = rejectReason;
     }
 }

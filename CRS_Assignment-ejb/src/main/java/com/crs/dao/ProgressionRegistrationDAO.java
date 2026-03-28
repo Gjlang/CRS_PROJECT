@@ -38,12 +38,81 @@ public class ProgressionRegistrationDAO {
         throw new SQLException("Failed to create progression registration.");
     }
 
+    public ProgressionRegistration findOpenRequestByStudentId(String studentId) throws SQLException {
+        String sql = """
+            SELECT registration_id, student_id, cgpa, failed_course_count,
+                   eligibility_status, registration_status, created_by_user_id,
+                   decided_by_user_id, decided_at, reject_reason, created_at
+            FROM progression_registrations
+            WHERE student_id = ?
+              AND registration_status IN ('PENDING', 'APPROVED')
+            ORDER BY registration_id DESC
+            LIMIT 1
+            """;
+
+        try (Connection conn = DbUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, studentId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return map(rs);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    public int approvePending(long registrationId, long adminUserId) throws SQLException {
+        String sql = """
+            UPDATE progression_registrations
+            SET registration_status = 'APPROVED',
+                decided_by_user_id = ?,
+                decided_at = NOW(),
+                reject_reason = NULL
+            WHERE registration_id = ?
+              AND registration_status = 'PENDING'
+            """;
+
+        try (Connection conn = DbUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setLong(1, adminUserId);
+            ps.setLong(2, registrationId);
+            return ps.executeUpdate();
+        }
+    }
+
+    public int rejectPending(long registrationId, long adminUserId, String reason) throws SQLException {
+        String sql = """
+            UPDATE progression_registrations
+            SET registration_status = 'REJECTED',
+                decided_by_user_id = ?,
+                decided_at = NOW(),
+                reject_reason = ?
+            WHERE registration_id = ?
+              AND registration_status = 'PENDING'
+            """;
+
+        try (Connection conn = DbUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setLong(1, adminUserId);
+            ps.setString(2, reason);
+            ps.setLong(3, registrationId);
+            return ps.executeUpdate();
+        }
+    }
+
     public List<ProgressionRegistration> listByCreator(long userId) throws SQLException {
         List<ProgressionRegistration> list = new ArrayList<>();
 
         String sql = """
             SELECT registration_id, student_id, cgpa, failed_course_count,
-                   eligibility_status, registration_status, created_by_user_id, created_at
+                   eligibility_status, registration_status, created_by_user_id,
+                   decided_by_user_id, decided_at, reject_reason, created_at
             FROM progression_registrations
             WHERE created_by_user_id = ?
             ORDER BY registration_id DESC
@@ -56,21 +125,7 @@ public class ProgressionRegistrationDAO {
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    ProgressionRegistration r = new ProgressionRegistration();
-                    r.setRegistrationId(rs.getLong("registration_id"));
-                    r.setStudentId(rs.getString("student_id"));
-                    r.setCgpa(rs.getDouble("cgpa"));
-                    r.setFailedCourseCount(rs.getInt("failed_course_count"));
-                    r.setEligibilityStatus(rs.getString("eligibility_status"));
-                    r.setRegistrationStatus(rs.getString("registration_status"));
-                    r.setCreatedByUserId(rs.getLong("created_by_user_id"));
-
-                    Timestamp ts = rs.getTimestamp("created_at");
-                    if (ts != null) {
-                        r.setCreatedAt(ts.toLocalDateTime());
-                    }
-
-                    list.add(r);
+                    list.add(map(rs));
                 }
             }
         }
@@ -83,7 +138,8 @@ public class ProgressionRegistrationDAO {
 
         String sql = """
             SELECT registration_id, student_id, cgpa, failed_course_count,
-                   eligibility_status, registration_status, created_by_user_id, created_at
+                   eligibility_status, registration_status, created_by_user_id,
+                   decided_by_user_id, decided_at, reject_reason, created_at
             FROM progression_registrations
             ORDER BY registration_id DESC
             """;
@@ -93,24 +149,40 @@ public class ProgressionRegistrationDAO {
              ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
-                ProgressionRegistration r = new ProgressionRegistration();
-                r.setRegistrationId(rs.getLong("registration_id"));
-                r.setStudentId(rs.getString("student_id"));
-                r.setCgpa(rs.getDouble("cgpa"));
-                r.setFailedCourseCount(rs.getInt("failed_course_count"));
-                r.setEligibilityStatus(rs.getString("eligibility_status"));
-                r.setRegistrationStatus(rs.getString("registration_status"));
-                r.setCreatedByUserId(rs.getLong("created_by_user_id"));
-
-                Timestamp ts = rs.getTimestamp("created_at");
-                if (ts != null) {
-                    r.setCreatedAt(ts.toLocalDateTime());
-                }
-
-                list.add(r);
+                list.add(map(rs));
             }
         }
 
         return list;
+    }
+
+    private ProgressionRegistration map(ResultSet rs) throws SQLException {
+        ProgressionRegistration r = new ProgressionRegistration();
+        r.setRegistrationId(rs.getLong("registration_id"));
+        r.setStudentId(rs.getString("student_id"));
+        r.setCgpa(rs.getDouble("cgpa"));
+        r.setFailedCourseCount(rs.getInt("failed_course_count"));
+        r.setEligibilityStatus(rs.getString("eligibility_status"));
+        r.setRegistrationStatus(rs.getString("registration_status"));
+        r.setCreatedByUserId(rs.getLong("created_by_user_id"));
+
+        Object decidedBy = rs.getObject("decided_by_user_id");
+        if (decidedBy != null) {
+            r.setDecidedByUserId(((Number) decidedBy).longValue());
+        }
+
+        Timestamp createdTs = rs.getTimestamp("created_at");
+        if (createdTs != null) {
+            r.setCreatedAt(createdTs.toLocalDateTime());
+        }
+
+        Timestamp decidedTs = rs.getTimestamp("decided_at");
+        if (decidedTs != null) {
+            r.setDecidedAt(decidedTs.toLocalDateTime());
+        }
+
+        r.setRejectReason(rs.getString("reject_reason"));
+
+        return r;
     }
 }

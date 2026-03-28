@@ -13,7 +13,6 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 import java.security.SecureRandom;
-import java.time.LocalDateTime;
 import java.util.Base64;
 
 @WebServlet("/forgot_password")
@@ -24,6 +23,8 @@ public class ForgotPasswordServlet extends HttpServlet {
 
     @EJB
     private NotificationEJB notificationEJB;
+
+    private final UserDAO dao = new UserDAO();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -51,20 +52,18 @@ public class ForgotPasswordServlet extends HttpServlet {
                 new SecureRandom().nextBytes(buf);
                 String token = Base64.getUrlEncoder().withoutPadding().encodeToString(buf);
 
-                LocalDateTime expiry = LocalDateTime.now().plusMinutes(30);
-
-                UserDAO dao = new UserDAO();
-                dao.saveResetToken(u.getUserId(), token, expiry);
+                dao.saveResetToken(u.getUserId(), token);
 
                 notificationEJB.sendPasswordResetEmail(u.getEmail(), token);
 
-                req.setAttribute("devToken", token); // for testing/demo if SMTP still not ready
+                req.setAttribute("devToken", token);
             }
 
             req.setAttribute("message", genericMsg);
             req.getRequestDispatcher("/forgot_password.jsp").forward(req, resp);
 
         } catch (Exception e) {
+            e.printStackTrace();
             req.setAttribute("error", "Failed: " + e.getMessage());
             req.getRequestDispatcher("/forgot_password.jsp").forward(req, resp);
         }

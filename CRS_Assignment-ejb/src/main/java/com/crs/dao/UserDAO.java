@@ -128,13 +128,14 @@ public class UserDAO {
         }
     }
 
-    public void saveResetToken(long userId, String token, LocalDateTime expiry) throws SQLException {
-        String sql = "UPDATE users SET reset_token=?, reset_token_expiry=? WHERE user_id=?";
+    public void saveResetToken(long userId, String token) throws SQLException {
+        String sql = "UPDATE users " +
+                     "SET reset_token=?, reset_token_expiry=DATE_ADD(NOW(), INTERVAL 30 MINUTE) " +
+                     "WHERE user_id=?";
         try (Connection con = DbUtil.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, token);
-            ps.setTimestamp(2, Timestamp.valueOf(expiry));
-            ps.setLong(3, userId);
+            ps.setLong(2, userId);
             ps.executeUpdate();
         }
     }
