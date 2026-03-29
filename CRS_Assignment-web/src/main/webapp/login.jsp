@@ -73,16 +73,9 @@
 
       </form>
 
-      <div class="auth-footnote">ENTERPRISE ACCESS ONLY</div>
-
     </div>
   </div>
 
-  <!-- Bottom / footer -->
-  <div class="auth-bottom">
-    System maintenance scheduled for Sundays 02:00 – 04:00 GMT.
-    <div style="margin-top:6px;">CRS Assignment — EPDA</div>
-  </div>
 
 </div>
 
